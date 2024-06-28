@@ -168,15 +168,15 @@ def _rename_worksheet(old_title: str, new_title: str):
     try:
         request_body = {
                 'requests': [{
-                    'updateSheetProperties': {
-                        'properties': {
-                            'sheetId': _get_sheet_id(old_title),
-                            'title': new_title
-                        },
-                        'fields': 'title'
-                    }
+                        'updateSheetProperties': {
+                                'properties': {
+                                        'sheetId': _get_sheet_id(old_title),
+                                        'title': new_title
+                                },
+                                'fields': 'title'
+                        }
                 }]
-            }
+        }
         service.spreadsheets().batchUpdate(
                 spreadsheetId=document_id, body=request_body).execute()
     except HttpError as error:
@@ -195,12 +195,12 @@ def _create_statement_worksheet():
         elif args.statement_date not in sheet_names:
             request_body = {
                 'requests': [{
-                    'addSheet': {
-                        'properties': {
-                            'title': args.statement_date,
-                            'index': 0
+                        'addSheet': {
+                                'properties': {
+                                        'title': args.statement_date,
+                                        'index': 0
+                                }
                         }
-                    }
                 }]
             }
             response = service.spreadsheets().batchUpdate(
@@ -226,35 +226,35 @@ def _create_statement_worksheet():
         if sheet_id == None:
             sheet_id = _get_sheet_id(args.statement_date)
         request_body = {
-        'requests': [{
-                'repeatCell': {
-                'range': {
-                        'sheet_id': sheet_id,
-                        'startColumnIndex': TRANSACTION_COLUMNS.index("TRNAMT"),
-                        'endColumnIndex': TRANSACTION_COLUMNS.index("TRNAMT") + 1
-                },
-                'cell': {
-                        'userEnteredFormat': {
-                        'numberFormat': {
-                                'type': 'NUMBER',
-                                'pattern': '0.00'
+                'requests': [{
+                        'repeatCell': {
+                                'range': {
+                                        'sheet_id': sheet_id,
+                                        'startColumnIndex': TRANSACTION_COLUMNS.index("TRNAMT"),
+                                        'endColumnIndex': TRANSACTION_COLUMNS.index("TRNAMT") + 1
+                                },
+                                'cell': {
+                                        'userEnteredFormat': {
+                                                'numberFormat': {
+                                                        'type': 'NUMBER',
+                                                        'pattern': '0.00'
+                                                }
+                                        }
+                                },
+                                'fields': "userEnteredFormat.numberFormat"
                         }
+                },{
+                        # While we are at it, freeze the header row for usability.
+                        "updateSheetProperties": {
+                                "properties": {
+                                        "sheetId": sheet_id,
+                                        "gridProperties": {
+                                        "frozenRowCount": 1
+                                        }
+                                },
+                                "fields": "gridProperties.frozenRowCount"
                         }
-                },
-                'fields': "userEnteredFormat.numberFormat"
-                }
-        },{
-                # While we are at it, freeze the header row for usability.
-                "updateSheetProperties": {
-                "properties": {
-                        "sheetId": sheet_id,
-                        "gridProperties": {
-                        "frozenRowCount": 1
-                        }
-                },
-                "fields": "gridProperties.frozenRowCount"
-                }
-            }]
+                }]
         }
         service.spreadsheets().batchUpdate(
                 spreadsheetId=document_id, body=request_body).execute()
