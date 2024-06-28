@@ -236,8 +236,8 @@ def _create_statement_worksheet():
                 'cell': {
                         'userEnteredFormat': {
                         'numberFormat': {
-                                'type': "TEXT",
-                                'pattern': "@"
+                                'type': 'NUMBER',
+                                'pattern': '0.00'
                         }
                         }
                 },
