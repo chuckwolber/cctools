@@ -374,7 +374,7 @@ def _get_allocations(amount: float):
             amount = round(amount - amt, 2)
             allocations[alloc_index] = amt
     
-    if sum(allocations) != original_amount:
+    if round(sum(allocations),2) != original_amount:
         raise Exception("Error: Transaction incorrectly allocated {} != {}".format(allocations, original_amount))
     return ['' if x == 0 else x for x in allocations]
 
