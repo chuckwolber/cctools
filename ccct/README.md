@@ -17,8 +17,31 @@ then store the results in a Google spreadsheet for further analysis.
 Setup guidance is geared towards macOS and Linux users. I have no idea how this
 sort of thing works in Windows; documentation patches gratefully accepted.
 
-Aside from cloning this repo (or just copying the script directly), setup splits
-along two lines - Python stuff and Google stuff.
+Aside from cloning this repo (or just copying the script directly), setup
+splits along two lines - Python stuff and Google stuff.
+
+### Bash Helper Function
+The command line can be a bit unwieldy, so it might help to use a helper
+function similar to the following. Add it to your `~/.bash_profile` if you want
+it available anytime you log in.
+
+```
+ccrec() {
+    local STMT_DATE=$1
+
+    local CLONE=~/path/to/ctools
+    local EXEC=${CLONE}/ccct/ccct
+    local QFX="~/path/to/export-${STMT_DATE}.qfx"
+
+    if [[ "${STMT_DATE}" =~ ^(19|20)[0-9]{2}(0[1-9]|1[0-2])26$ ]]; then
+        source ${CLONE}/.venv/bin/activate
+        ${EXEC} --credential-dir=CHANGEME --fx-file=${QFX} --bank-id=CHANGEME --statement-date=${STMT_DATE} --alloc-columns='CHANGEME' --document-id='CHANGEME'
+        deactivate
+    else
+        echo "Error: Invalid statement date!"
+    fi
+}
+```
 
 ### Python Stuff
 You are going to need the following python libraries:
@@ -28,17 +51,20 @@ You are going to need the following python libraries:
 * [`google-auth-oauthlib`](https://pypi.org/project/google-auth-oauthlib/)
 
 If you use [`pip3`](https://pypi.org/project/pip/), you can install them all at
-once:
+once in a virtual environment:
 ```
+python3 -m venv .venv
+source .venv/bin/activate
 pip3 install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib ofxtools
+deactivate
 ```
 
 ### Google Stuff
 Google does not appear to have a simple "hobbyist" process for programmatically
-accessing your own Google Drive content. You have to create a cloud project, add
-the Google Sheets API to the project, generate OAuth credentials that are stored
-locally in the form of a JSON file, and then add yourself to the project as a
-test user.
+accessing your own Google Drive content. You have to create a cloud project,
+add the Google Sheets API to the project, generate OAuth credentials that are
+stored locally in the form of a JSON file, and then add yourself to the project
+as a test user.
 
 I found the [Google Sheets Python quickstart](https://developers.google.com/sheets/api/quickstart/python)
 to be quite helpful with the above. The following steps are a distilled version.
