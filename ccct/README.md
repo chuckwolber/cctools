@@ -43,6 +43,14 @@ ccrec() {
 }
 ```
 
+### Config File
+If you wish to avoid supplying command line arguments, you can optionally set up
+a config file. Config file format is as follows:
+
+```
+
+```
+
 ### Python Stuff
 You are going to need the following python libraries:
 * [`ofxtools`](https://pypi.org/project/ofxtools/)
@@ -55,7 +63,7 @@ once in a virtual environment:
 ```
 python3 -m venv .venv
 source .venv/bin/activate
-pip3 install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib ofxtools
+pip3 install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib ofxtools jsonschema
 deactivate
 ```
 

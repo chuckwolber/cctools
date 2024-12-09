@@ -1,0 +1,18 @@
+{
+	"credential_dir": "~/.google",
+	"bank_id": 123456789,
+	"document_id": "2CZrPH3M-Lg-TmD5luXu7loG3svABgfGP23txXbar7dg",
+	"alloc_columns": [{
+		"short": "ap",
+		"long": "Amazon Purchases"
+	},{
+		"short": "pc",
+		"long": "Petcare"
+	},{
+		"short": "af",
+		"long": "Auto Fuel"
+	},{
+		"short": "af",
+		"long": "Auto Fuel"
+	}]
+}
