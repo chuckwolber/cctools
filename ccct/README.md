@@ -3,9 +3,9 @@ This tool categorizes credit card transactions into user defined "buckets" and
 stores the results in a Google spreadsheet.
 
 ## Overview
-This tool is very narrowly constructed to parse QFX or OFX files that contain
-credit card transactions (e.g. `<ACCTTYPE>CREDITLINE`), categorize them, and
-then store the results in a Google spreadsheet for further analysis.
+This tool is narrowly constructed to parse QFX or OFX files that contain credit
+card transactions (e.g. `<ACCTTYPE>CREDITLINE`), categorize them, and then store
+the results in a Google spreadsheet for further analysis.
 
 ### Features
 * User defined categories (See: `--alloc-columns`).
@@ -60,7 +60,7 @@ deactivate
 ```
 
 ### Google Stuff
-Google does not appear to have a simple "hobbyist" process for programmatically
+Google does not seem to have a simple "hobbyist" process for programmatically
 accessing your own Google Drive content. You have to create a cloud project,
 add the Google Sheets API to the project, generate OAuth credentials that are
 stored locally in the form of a JSON file, and then add yourself to the project
@@ -106,33 +106,33 @@ Allocate transaction [[c, ca, k, ka, jc, js, af, f, v, h]][44.03]: c
 ```
 
 ### Transaction Types
-Credit card transactions come in two flavors, CREDIT and DEBIT. In QFX/OFX files
-transaction CREDIT amounts (refunds and payments) are positive numbers and
-transaction DEBIT amounts (charges) are negative numbers.
+Credit card transactions come in two flavors, CREDIT and DEBIT. In QFX/OFX
+files, transaction CREDIT amounts (refunds and payments) are positive numbers
+and transaction DEBIT amounts (charges) are negative numbers.
 
 ### Sign Inversion
 In order to have a clear picture of what is owed (i.e. what transaction CREDIT
 the bank is now expecting) the sign on transaction amounts is inverted during
 the categorization process. Most bank websites will display transaction data in
 a similar fashion, but rather than display a transaction CREDIT as a negative
-number they use standard accounting notation (e.g. "(10.02)").
+number they use standard accounting notation (e.g. `(10.02)`).
 
-You can also view this in terms of the credit card balance if that makes more
-sense. A transaction DEBIT is a CREDIT on the balance. The card's balance is
-DEBITed or "paid off" with a CREDIT transaction.
+You can also think of this in terms of the credit card balance if that makes
+more sense. A transaction DEBIT is a CREDIT on the balance. The card's balance
+is DEBITed or "paid off" with a CREDIT transaction.
 
 ### Transaction Categorization
 Transactions can be allocated to one or more categories, however a card
-transaction CREDIT can only be allocated as a payment DEBIT and a card
+transaction CREDIT can only be allocated as a payment DEBIT, and a card
 transaction DEBIT only be allocated as a payment CREDIT. No mixing and matching
 is allowed.
 
 Given a transaction DEBIT of -44.03, one might choose to allocate a payment
-CREDIT of 20 to category "c" and a payment CREDIT of 24.03 to category "k"; both
-must be positive values representing the sum total of the payment CREDIT "owed"
-on the original transaction DEBIT. One cannot allocate a transaction DEBIT in
-terms of a payment CREDIT on one category and a payment DEBIT on another
-category, even if the total is equal to the original transaction DEBIT.
+CREDIT of 20 to category "ap" and a payment CREDIT of 24.03 to category "pc";
+both must be positive values representing the sum total of the payment CREDIT
+"owed" on the original transaction DEBIT. One cannot allocate a transaction
+DEBIT in terms of a payment CREDIT on one category and a payment DEBIT on
+another category, even if the total is equal to the original transaction DEBIT.
 
 Here is an example of allocating a transaction DEBIT to a single category:
 ```
