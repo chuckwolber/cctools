@@ -110,6 +110,9 @@ pip3 install --upgrade google-api-python-client google-auth-httplib2 google-auth
 deactivate
 ```
 
+If you want to run the tests, add `pytest` to your venv, or just use the built
+in `unittest` framework by running `make test` at the project root.
+
 ### Google Stuff
 Google does not seem to have a simple "hobbyist" process for programmatically
 accessing your own Google Drive content. You have to create a cloud project,
