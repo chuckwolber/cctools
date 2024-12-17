@@ -8,7 +8,7 @@
 		},
 		"bank_id": {
 			"description": "Your bank's ABA routing number.",
-			"type": "integer"
+			"type": "unknown"
 		},
 		"document_id": {
 			"description": "Google Sheets spreadsheet document ID.",
@@ -17,7 +17,7 @@
 		"alloc_columns": {
 			"description": "Spreadsheet columns to allocate transactions to.",
 			"type": "array",
-			"minItems": 1,
+			"minItems": 1
 			"uniqueItems": true,
 			"items": {
 				"type": "object",
@@ -36,4 +36,3 @@
 			}
 		}
 	}
-}
