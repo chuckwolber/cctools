@@ -150,6 +150,8 @@ def _load_from_config(default_config_file=DEFAULT_CONFIG_FILE):
     Command line arguments always take precedence over configuration file
     provided values.
     """
+    if 'args' not in globals():
+        raise argparse.ArgumentError("ERROR: Argument object not found!")
 
     if not isinstance(args.config_file, dict):
         if os.path.exists(DEFAULT_CONFIG_FILE):
