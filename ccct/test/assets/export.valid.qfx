@@ -1,0 +1,199 @@
+OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:USASCII
+CHARSET:1252
+COMPRESSION:NONE
+OLDFILEUID:NONE
+NEWFILEUID:NONE
+
+<OFX>
+	<SIGNONMSGSRSV1>
+		<SONRS>
+			<STATUS>
+				<CODE>0
+				<SEVERITY>INFO
+			</STATUS>
+			<DTSERVER>20241209001741.247
+			<LANGUAGE>ENG
+			<DTPROFUP>20050531070000.000
+			<FI>
+				<ORG>USAA
+				<FID>3210
+			</FI>
+			<INTU.BID>9999
+			<INTU.USERID>redacted
+		</SONRS>
+	</SIGNONMSGSRSV1>
+	<BANKMSGSRSV1>
+		<STMTTRNRS>
+			<TRNUID>0
+			<STATUS>
+				<CODE>0
+				<SEVERITY>INFO
+			</STATUS>
+			<STMTRS>
+				<CURDEF>USD
+				<BANKACCTFROM>
+					<BANKID>314074269
+					<ACCTID>XXXXXXXXXXXXXXXX
+					<ACCTTYPE>CREDITLINE
+				</BANKACCTFROM>
+				<BANKTRANLIST>
+					<DTSTART>20241126080000.000
+					<DTEND>20241208080000.000
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20241126120000.000
+						<TRNAMT>0.00
+						<FITID>20241126000InterestChargeonPurchases
+						<NAME>Interest Charge on Purchases
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20241126120000.000
+						<TRNAMT>-1.96
+						<FITID>2445106NS8WXQ9TXV
+						<NAME>ABCDEFG	 123-456
+						<MEMO>ABCDEFG	 800-555-1212 OR
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20241126120000.000
+						<TRNAMT>0.00
+						<FITID>20241126000Redacted1
+						<NAME>Transaction 1
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20241126120000.000
+						<TRNAMT>0.00
+						<FITID>20241126000Redacted2
+						<NAME>Transaction 2
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20241126120000.000
+						<TRNAMT>-15.96
+						<FITID>Redacted3
+						<NAME>Transaction 3
+						<MEMO>Memo for Transaction 3
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20241126120000.000
+						<TRNAMT>-49.60
+						<FITID>Redacted4
+						<NAME>Transaction 4
+						<MEMO>Memo for Transaction 4
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20241126120000.000
+						<TRNAMT>-42.98
+						<FITID>Redacted5
+						<NAME>Transaction 5
+						<MEMO>Memo for Transaction 5
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20241126120000.000
+						<TRNAMT>-55.00
+						<FITID>Redacted6
+						<NAME>Transaction 6
+						<MEMO>Memo for Transaction 6
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20241126120000.000
+						<TRNAMT>-1.20
+						<FITID>Redacted7
+						<NAME>Transaction 7
+						<MEMO>Memo for Transaction 7
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20241126120000.000
+						<TRNAMT>-8.23
+						<FITID>Redacted8
+						<NAME>Transaction 8
+						<MEMO>Memo for Transaction 8
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20241126120000.000
+						<TRNAMT>-77.51
+						<FITID>Redacted9
+						<NAME>Transaction 9
+						<MEMO>Memo for Transaction 9
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20241126120000.000
+						<TRNAMT>-35.00
+						<FITID>Redacted10
+						<NAME>Transaction 10
+						<MEMO>Memo for Transaction 10
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20241125120000.000
+						<TRNAMT>-24.00
+						<FITID>Redacted11
+						<NAME>Transaction 11
+						<MEMO>Memo for Transaction 11
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20241125120000.000
+						<TRNAMT>-33.05
+						<FITID>Redacted12
+						<NAME>Transaction 12
+						<MEMO>Memo for Transaction 12
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20241125120000.000
+						<TRNAMT>-49.55
+						<FITID>Redacted13
+						<NAME>Transaction 13
+						<MEMO>Memo for Transaction 13
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20241125120000.000
+						<TRNAMT>-16.35
+						<FITID>Redacted14
+						<NAME>Transaction 14
+						<MEMO>Memo for Transaction 14
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20241125120000.000
+						<TRNAMT>-30.63
+						<FITID>Redacted15
+						<NAME>Transaction 15
+						<MEMO>Memo for Transaction 15
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20241125120000.000
+						<TRNAMT>-64.47
+						<FITID>Redacted16
+						<NAME>Transaction 16
+						<MEMO>Memo for Transaction 16
+					</STMTTRN>
+				</BANKTRANLIST>
+				<LEDGERBAL>
+					<BALAMT>-1234.56
+					<DTASOF>20241209001741.247
+				</LEDGERBAL>
+				<AVAILBAL>
+					<BALAMT>8765.43
+					<DTASOF>20241209001741.247
+				</AVAILBAL>
+			</STMTRS>
+		</STMTTRNRS>
+	</BANKMSGSRSV1>
+</OFX>
