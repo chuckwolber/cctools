@@ -68,11 +68,11 @@ def _is_valid_statement_date(statement_date):
         raise argparse.ArgumentTypeError(error_msg)
     return statement_date
 
-def _is_valid_config_file(config_file):
+def _is_valid_config_file(config_file, schema_file=SCHEMA_FILE):
     error_msg = "ERROR: Invalid config file {}".format(config_file)
     config_file = Path(config_file).expanduser()
     try:
-        with open(SCHEMA_FILE, "r") as json_schema:
+        with open(schema_file, "r") as json_schema:
             schema = json.load(json_schema)
         with open(config_file, "r") as json_config:
             config = json.load(json_config)
@@ -84,7 +84,7 @@ def _is_valid_config_file(config_file):
         raise argparse.ArgumentTypeError(error_msg + "\n" + str(e))
     return config
 
-def _parse_args():
+def _parse_args(exit_on_error=True):
     global args
 
     parser = argparse.ArgumentParser(
@@ -120,8 +120,9 @@ def _parse_args():
                         type=_is_valid_config_file,
                         help="JSON formatted config file. See docs for details.")
     args = parser.parse_args()
+    return True
 
-def _load_from_config():
+def _load_from_config(default_config_file=DEFAULT_CONFIG_FILE):
     """ Load Missing Configuration from a Configuration File
     If a default configuration file is available, load it and run the correct
     validation action on any missing arguments.
@@ -134,7 +135,7 @@ def _load_from_config():
         if os.path.exists(DEFAULT_CONFIG_FILE):
             args.config_file = _is_valid_config_file(str(DEFAULT_CONFIG_FILE))
         else:
-            return
+            return False
 
     if args.credential_dir == None and "credential_dir" in args.config_file:
         args.credential_dir = _is_valid_credential_dir(args.config_file['credential_dir'])
@@ -152,17 +153,26 @@ def _load_from_config():
             args.alloc_columns.append(c['short'])
             args.alloc_columns_map[c['short']] = c['long']
 
-def _resolve_config():
-    _load_from_config()
+    return True
+
+def _resolve_config(exit_on_error=True, default_config_file=DEFAULT_CONFIG_FILE):
+    _parse_args(exit_on_error=exit_on_error)
+    _load_from_config(default_config_file=default_config_file)
 
     # Missing command line args are filled in from a config file if one is
     # available. Ensure that all requried values end up being populated.
+    if args.fx_file == None:
+        raise argparse.ArgumentTypeError("Error: FX file unknown!")
+    if args.statement_date == None:
+        raise argparse.ArgumentTypeError("Error: Statement date unknown!")
     if args.credential_dir == None:
         raise argparse.ArgumentTypeError("Error: Credential directory unknown!")
     if args.bank_id == None:
         raise argparse.ArgumentTypeError("Error: Bank ID unknown!")
     if args.alloc_columns == None:
         raise argparse.ArgumentTypeError("Error: Allocation columns unknown!")
+
+    return True
 
 def _parse_fx_file():
     global ofx
@@ -179,6 +189,8 @@ def _parse_fx_file():
         raise Exception("Error: Invalid BankID. Got {}, expected {}".format(ofx_bank_id, args.bank_id))
     if ofx_accttype != ACCTTYPE:
         raise Exception("Error: Invalid account type. Got {}, expected {}".format(ofx_accttype, ACCTTYPE))
+
+    return True
 
 def _get_google_creds():
     global creds
@@ -558,7 +570,6 @@ def _write_ofx_transactions():
         return error
 
 def console_main():
-    _parse_args()
     _resolve_config()
     _parse_fx_file()
     _get_google_creds()
