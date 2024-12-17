@@ -45,8 +45,11 @@ def _is_valid_credential_dir(credential_dir):
 
 def _is_valid_bank_id(bank_id):
     error_msg = "ERROR: Invalid bank ID {}".format(bank_id)
-    if not re.match('[0-9]{9}', bank_id):
-        raise argparse.ArgumentTypeError(error_msg)
+    try:
+        if not re.match('[0-9]{9}', bank_id):
+            raise argparse.ArgumentTypeError(error_msg)
+    except TypeError:
+        raise argparse.ArgumentTypeError("ERROR: Bank ID missing!")
     if sum(w * int(n) for w, n in zip([3, 7, 1] * 3, bank_id)) % 10 != 0:
         raise argparse.ArgumentTypeError(error_msg)
     return bank_id
@@ -68,8 +71,11 @@ def _is_valid_fx_file(fx_file):
 
 def _is_valid_statement_date(statement_date):
     error_msg = "ERROR: Invalid statement date {}".format(statement_date)
-    if not re.match('[0-9]{8}', statement_date):
-        raise argparse.ArgumentTypeError(error_msg)
+    try:
+        if not re.match('[0-9]{8}', statement_date):
+            raise argparse.ArgumentTypeError(error_msg)
+    except TypeError:
+        raise argparse.ArgumentTypeError("ERROR: Statement date missing!")
     if not datetime.strptime(statement_date, '%Y%m%d'):
         raise argparse.ArgumentTypeError(error_msg)
     return statement_date
