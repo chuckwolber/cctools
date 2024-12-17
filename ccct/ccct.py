@@ -55,7 +55,10 @@ def _is_valid_bank_id(bank_id):
     return bank_id
 
 def _set_alloc_columns(alloc_columns):
-    cols = alloc_columns.split(":")
+    try:
+        cols = alloc_columns.split(":")
+    except AttributeError:
+        raise argparse.ArgumentTypeError("ERROR: alloc columns string missing!")
     if len(cols) <= 1:
         raise argparse.ArgumentTypeError("ERROR: Two or more allocation colums are required.")
     return cols
