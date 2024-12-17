@@ -35,7 +35,10 @@ TRANSACTION_COLUMNS = ["FITID", "DTPOSTED", "TRNTYPE", "TRNAMT", "NAME", "MEMO"]
 # Stronger validation happens later on.
 #
 def _is_valid_credential_dir(credential_dir):
-    credential_dir = Path(credential_dir).expanduser()
+    try:
+        credential_dir = Path(credential_dir).expanduser()
+    except TypeError:
+        raise argparse.ArgumentTypeError("ERROR: Credential dir missing!")
     if not os.path.exists(credential_dir):
         raise argparse.ArgumentTypeError(f"ERROR: Credential directory not found: {(credential_dir)}")
     return credential_dir
@@ -55,7 +58,10 @@ def _set_alloc_columns(alloc_columns):
     return cols
 
 def _is_valid_fx_file(fx_file):
-    fx_file = Path(fx_file).expanduser()
+    try:
+        fx_file = Path(fx_file).expanduser()
+    except TypeError:
+        raise argparse.ArgumentTypeError("ERROR: FX file missing!")
     if not os.path.exists(fx_file):
         raise argparse.ArgumentTypeError(f"ERROR: FX file not found: {(fx_file)}")
     return fx_file
@@ -70,14 +76,17 @@ def _is_valid_statement_date(statement_date):
 
 def _is_valid_config_file(config_file, schema_file=SCHEMA_FILE):
     error_msg = "ERROR: Invalid config file {}".format(config_file)
-    config_file = Path(config_file).expanduser()
     try:
+        config_file = Path(config_file).expanduser()
         with open(schema_file, "r") as json_schema:
             schema = json.load(json_schema)
         with open(config_file, "r") as json_config:
             config = json.load(json_config)
     except FileNotFoundError as e:
         raise argparse.ArgumentTypeError(str(e))
+    except TypeError:
+        raise argparse.ArgumentTypeError("ERROR: Invalid config file!")
+
     try:
         validate(instance=config, schema=schema)
     except ValidationError as e:
