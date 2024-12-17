@@ -5,10 +5,14 @@
 # Categorize credit card transactions and save them to a Google spreadsheet.
 
 import argparse
+import json
 import os.path
 import re
 
 from datetime import datetime
+from pathlib import Path
+from jsonschema import validate
+from jsonschema.exceptions import ValidationError
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -17,20 +21,26 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from ofxtools.Parser import OFXTree
 
+SCRIPT_DIR = str(Path(__file__).resolve().parent)
+CONFIG_DIR = SCRIPT_DIR + "/config"
+SCHEMA_FILE = CONFIG_DIR + "/ccct.config.schema.json"
+DEFAULT_CONFIG_FILE = Path("~/.config/cctools/ccct.config.json").expanduser()
+
 ACCTTYPE = "CREDITLINE"
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 TITLE = "CreditCardTransactions"
 TRANSACTION_COLUMNS = ["FITID", "DTPOSTED", "TRNTYPE", "TRNAMT", "NAME", "MEMO"]
 
+#
+# ActionType functions called from _parse_args(). Neither the arguments nor the
+# firing order can be controlled, so validtion is isolated to the bare minimum.
+# Stronger validation happens later on.
+#
 def _is_valid_credential_dir(credential_dir):
+    credential_dir = Path(credential_dir).expanduser()
     if not os.path.exists(credential_dir):
         raise argparse.ArgumentTypeError(f"ERROR: Credential directory not found: {(credential_dir)}")
     return credential_dir
-
-def _is_valid_fx_file(fx_file):
-    if not os.path.exists(fx_file):
-        raise argparse.ArgumentTypeError(f"ERROR: FX file not found: {(fx_file)}")
-    return fx_file
 
 def _is_valid_bank_id(bank_id):
     error_msg = "ERROR: Invalid bank ID {}".format(bank_id)
@@ -40,6 +50,18 @@ def _is_valid_bank_id(bank_id):
         raise argparse.ArgumentTypeError(error_msg)
     return bank_id
 
+def _set_alloc_columns(alloc_columns):
+    cols = alloc_columns.split(":")
+    if len(cols) <= 1:
+        raise argparse.ArgumentTypeError("ERROR: Two or more allocation colums are required.")
+    return cols
+
+def _is_valid_fx_file(fx_file):
+    fx_file = Path(fx_file).expanduser()
+    if not os.path.exists(fx_file):
+        raise argparse.ArgumentTypeError(f"ERROR: FX file not found: {(fx_file)}")
+    return fx_file
+
 def _is_valid_statement_date(statement_date):
     error_msg = "ERROR: Invalid statement date {}".format(statement_date)
     if not re.match('[0-9]{8}', statement_date):
@@ -48,40 +70,101 @@ def _is_valid_statement_date(statement_date):
         raise argparse.ArgumentTypeError(error_msg)
     return statement_date
 
-def _set_alloc_columns(alloc_columns):
-    cols = alloc_columns.split(":")
-    if len(cols) <= 1:
-        raise argparse.ArgumentTypeError("ERROR: Two or more allocation colums are required.")
-    return cols
+def _is_valid_config_file(config_file):
+    error_msg = "ERROR: Invalid config file {}".format(config_file)
+    config_file = Path(config_file).expanduser()
+    try:
+        with open(SCHEMA_FILE, "r") as json_schema:
+            schema = json.load(json_schema)
+        with open(config_file, "r") as json_config:
+            config = json.load(json_config)
+    except FileNotFoundError as e:
+        raise argparse.ArgumentTypeError(str(e))
+    try:
+        validate(instance=config, schema=schema)
+    except ValidationError as e:
+        raise argparse.ArgumentTypeError(error_msg + "\n" + str(e))
+    return config
 
 def _parse_args():
     global args
 
-    parser = argparse.ArgumentParser(description="Categorize Credit Card Transactions")
+    parser = argparse.ArgumentParser(
+            description="Categorize Credit Card Transactions",
+            exit_on_error=exit_on_error)
     parser.add_argument('--credential-dir',
-                        required=True,
+                        required=False,
                         type=_is_valid_credential_dir,
                         help="Google API credential directory.")
+    parser.add_argument('--bank-id',
+                        required=False,
+                        type=_is_valid_bank_id,
+                        help="The bank routing number. Used to validate the FX file.")
+    parser.add_argument('--document-id',
+                        required=False,
+                        default=None,
+                        help="The google document ID to write transactions. A new spreadsheet is created if this is omitted.")
+    parser.add_argument('--alloc-columns',
+                        required=False,
+                        type=_set_alloc_columns,
+                        help="Colon delimited list of categories to allocate transactions.")
     parser.add_argument('--fx-file',
                         required=True,
                         type=_is_valid_fx_file,
                         help="The QFX or OFX file to parse for transactions.")
-    parser.add_argument('--bank-id',
-                        required=True,
-                        type=_is_valid_bank_id,
-                        help="The bank routing number. Used to validate the FX file.")
     parser.add_argument('--statement-date',
                         required=True,
                         type=_is_valid_statement_date,
                         help="This is the worksheet that accumulates transactions.")
-    parser.add_argument('--alloc-columns',
-                        required=True,
-                        type=_set_alloc_columns,
-                        help="Colon delimited list of categories to allocate transactions.")
-    parser.add_argument('--document-id',
-                        default=None,
-                        help="The google document ID to write transactions. A new spreadsheet is created if this is omitted.")
+    parser.add_argument('--config-file',
+                        required=False,
+                        default=DEFAULT_CONFIG_FILE,
+                        type=_is_valid_config_file,
+                        help="JSON formatted config file. See docs for details.")
     args = parser.parse_args()
+
+def _load_from_config():
+    """ Load Missing Configuration from a Configuration File
+    If a default configuration file is available, load it and run the correct
+    validation action on any missing arguments.
+
+    Command line arguments always take precedence over configuration file
+    provided values.
+    """
+
+    if not isinstance(args.config_file, dict):
+        if os.path.exists(DEFAULT_CONFIG_FILE):
+            args.config_file = _is_valid_config_file(str(DEFAULT_CONFIG_FILE))
+        else:
+            return
+
+    if args.credential_dir == None and "credential_dir" in args.config_file:
+        args.credential_dir = _is_valid_credential_dir(args.config_file['credential_dir'])
+
+    if args.bank_id == None and "bank_id" in args.config_file:
+        args.bank_id = _is_valid_bank_id(str(args.config_file['bank_id']))
+
+    if args.document_id == None and "document_id" in args.config_file:
+        args.document_id = args.config_file['document_id']
+
+    if args.alloc_columns == None and "alloc_columns" in args.config_file:
+        args.alloc_columns = []
+        args.alloc_columns_map = {}
+        for c in args.config_file['alloc_columns']:
+            args.alloc_columns.append(c['short'])
+            args.alloc_columns_map[c['short']] = c['long']
+
+def _resolve_config():
+    _load_from_config()
+
+    # Missing command line args are filled in from a config file if one is
+    # available. Ensure that all requried values end up being populated.
+    if args.credential_dir == None:
+        raise argparse.ArgumentTypeError("Error: Credential directory unknown!")
+    if args.bank_id == None:
+        raise argparse.ArgumentTypeError("Error: Bank ID unknown!")
+    if args.alloc_columns == None:
+        raise argparse.ArgumentTypeError("Error: Allocation columns unknown!")
 
 def _parse_fx_file():
     global ofx
@@ -332,6 +415,16 @@ def _get_statement_worksheet_transactions():
         print(f"An error occurred: {error}")
         return error
 
+def _display_alloc_column_map_key(key):
+    print("\t" + key + ":\t" + args.alloc_columns_map[key])
+
+def _display_alloc_column_map(key=None):
+    if key == None:
+        for key in args.alloc_columns_map.keys():
+            _display_alloc_column_map_key(key)
+    else:
+            _display_alloc_column_map_key(key)
+
 def _get_allocations(amount: float):
     allocations = [0] * len(args.alloc_columns)
     original_amount = amount
@@ -342,19 +435,31 @@ def _get_allocations(amount: float):
 
     while amount != 0:
         paired = [f"{a}({b})" if b != 0 else a for a, b in zip(args.alloc_columns, allocations)]
-        valid_inputs = f"[{', '.join(paired)}]"
 
-        user_input = input(f"Allocate transaction [{(valid_inputs)}][{(amount)}]: ")
+        # If we have a map, enable the '?' command to display it.
+        if "alloc_columns_map" in args and args.alloc_columns_map != None:
+            paired.append('?')
+
+        valid_inputs = f"[{', '.join(paired)}]"
+        user_input = input(f"Allocate Transaction {(valid_inputs)}[{(amount)}]: ")
         alloc = user_input.split()
 
         if len(alloc) > 0:
             col = alloc[0]
-            if col not in args.alloc_columns:
-                continue
-            alloc_index = args.alloc_columns.index(col)
 
+            if col == "?":
+                _display_alloc_column_map()
+                continue
+            elif col not in args.alloc_columns:
+                continue
+
+            alloc_index = args.alloc_columns.index(col)
             amt = amount
+
             if len(alloc) > 1:
+                if alloc[1] == "?":
+                    _display_alloc_column_map(alloc[0])
+                    continue
                 try:
                     amt = float(alloc[1])
 
@@ -362,18 +467,18 @@ def _get_allocations(amount: float):
                     # and vice versa.
                     if (negative and amt > 0) or (not negative and amt < 0):
                         continue
-                    
+
                     if negative and amt < amount:
                         amt = amount
                     elif not negative and amt > amount:
                         amt = amount
                 except ValueError:
                     continue
-        
+
             amount = amount + allocations[alloc_index]
             amount = round(amount - amt, 2)
             allocations[alloc_index] = amt
-    
+
     if round(sum(allocations),2) != original_amount:
         raise Exception("Error: Transaction incorrectly allocated {} != {}".format(allocations, original_amount))
     return ['' if x == 0 else x for x in allocations]
@@ -456,6 +561,7 @@ def _write_ofx_transactions():
 
 def main():
     _parse_args()
+    _resolve_config()
     _parse_fx_file()
     _get_google_creds()
 

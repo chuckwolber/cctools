@@ -1,0 +1,39 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema#",
+	"type": "object",
+	"properties": {
+		"credential_dir": {
+			"description": "Google sheets credential directory.",
+			"type": "string"
+		},
+		"bank_id": {
+			"description": "Your bank's ABA routing number.",
+			"type": "integer"
+		},
+		"document_id": {
+			"description": "Google Sheets spreadsheet document ID.",
+			"type": "string"
+		},
+		"alloc_columns": {
+			"description": "Spreadsheet columns to allocate transactions to.",
+			"type": "array",
+			"minItems": 1,
+			"uniqueItems": true,
+			"items": {
+				"type": "object",
+				"properties": {
+					"short": {
+						"type": "string"
+					},
+					"long": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"short",
+					"long"
+				]
+			}
+		}
+	}
+}
