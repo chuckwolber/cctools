@@ -91,6 +91,8 @@ def _is_valid_config_file(config_file, schema_file=SCHEMA_FILE):
             schema = json.load(json_schema)
         with open(config_file, "r") as json_config:
             config = json.load(json_config)
+    except json.decoder.JSONDecodeError as e:
+        raise argparse.ArgumentTypeError(str(e))
     except FileNotFoundError as e:
         raise argparse.ArgumentTypeError(str(e))
     except TypeError:
