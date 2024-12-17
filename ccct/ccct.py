@@ -154,8 +154,8 @@ def _load_from_config(default_config_file=DEFAULT_CONFIG_FILE):
         raise argparse.ArgumentError("ERROR: Argument object not found!")
 
     if not isinstance(args.config_file, dict):
-        if os.path.exists(DEFAULT_CONFIG_FILE):
-            args.config_file = _is_valid_config_file(str(DEFAULT_CONFIG_FILE))
+        if default_config_file is not None and os.path.exists(default_config_file):
+            args.config_file = _is_valid_config_file(str(default_config_file))
         else:
             return False
 
