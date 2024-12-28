@@ -567,7 +567,6 @@ def _write_ofx_transactions():
         print("No transactions to write...")
         return 0
 
-    ofx_transactions = sorted(ofx_transactions, key=lambda x: x[TRANSACTION_COLUMNS.index("DTPOSTED")])
     range_name = "{}!R{}C1:R{}C{}".format(args.statement_date,
                         len(worksheet_transactions) + 2,
                         len(worksheet_transactions) + 1 + len(ofx_transactions),
