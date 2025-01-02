@@ -23,7 +23,6 @@ INVALID_ALLOC_COLUMNS = [None, "", "x", " "]
 VALID_ALLOC_COLUMNS = ['a:b:c:d:e:f:g']
 
 MISSING_FX_FILES = [None, INVALID_DIR, INVALID_DIR + "/export.qfx"]
-INVALID_FX_FILES = [ASSETS_DIR + "/export.invalid-1.qfx"]
 VALID_FX_FILES = [ASSETS_DIR + "/export.valid.qfx"]
 
 # Triggers argparse.ArgumentTypeError
