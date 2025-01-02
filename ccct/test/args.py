@@ -19,7 +19,7 @@ def get_arg(arg=None):
     return
 
 def set_all_required():
-    set_fx_file(const.VALID_FX_FILES[0])
+    set_ofx_file(const.VALID_OFX_FILES[0])
     set_statement_date(const.VALID_STATEMENT_DATES[0])
 
 def set_credential_dir(custom):
@@ -38,8 +38,8 @@ def set_alloc_columns(custom):
     arg = '--alloc-columns'
     set_arg(arg=arg, value=custom)
 
-def set_fx_file(custom):
-    arg = '--fx-file'
+def set_ofx_file(custom):
+    arg = '--ofx-file'
     set_arg(arg=arg, value=custom)
 
 def set_statement_date(custom):

@@ -22,8 +22,8 @@ VALID_DOCUMENT_ID = "3DAsQI4N-Mh-UnE6mvYv8mpH4twBChgHQ34uyYcar7dg"
 INVALID_ALLOC_COLUMNS = [None, "", "x", " "]
 VALID_ALLOC_COLUMNS = ['a:b:c:d:e:f:g']
 
-MISSING_FX_FILES = [None, INVALID_DIR, INVALID_DIR + "/export.qfx"]
-VALID_FX_FILES = [ASSETS_DIR + "/export.valid.qfx"]
+MISSING_OFX_FILES = [None, INVALID_DIR, INVALID_DIR + "/export.qfx"]
+VALID_OFX_FILES = [ASSETS_DIR + "/export.valid.qfx"]
 
 # Triggers argparse.ArgumentTypeError
 INVALID_STATEMENT_DATE_STRINGS = [None, "1234567" , "123456789"]
