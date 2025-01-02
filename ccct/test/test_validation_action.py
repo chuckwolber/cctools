@@ -35,13 +35,13 @@ class TestValidationAction(unittest.TestCase):
             with self.subTest(i=i):
                 self.assertTrue(ccct._set_alloc_columns(i) == i.split(":"))
 
-    def test__is_valid_fx_file(self):
-        for i in const.MISSING_FX_FILES:
+    def test__is_valid_ofx_file(self):
+        for i in const.MISSING_OFX_FILES:
             with self.subTest(i=i):
-                self.assertRaises(argparse.ArgumentTypeError, ccct._is_valid_fx_file, i)
-        for i in const.VALID_FX_FILES:
+                self.assertRaises(argparse.ArgumentTypeError, ccct._is_valid_ofx_file, i)
+        for i in const.VALID_OFX_FILES:
             with self.subTest(i=i):
-                self.assertTrue(ccct._is_valid_fx_file(i))
+                self.assertTrue(ccct._is_valid_ofx_file(i))
 
     def test__is_valid_statement_date(self):
         for i in const.INVALID_STATEMENT_DATE_STRINGS:

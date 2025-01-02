@@ -63,14 +63,14 @@ def _set_alloc_columns(alloc_columns):
         raise argparse.ArgumentTypeError("ERROR: Two or more allocation colums are required.")
     return cols
 
-def _is_valid_fx_file(fx_file):
+def _is_valid_ofx_file(ofx_file):
     try:
-        fx_file = Path(fx_file).expanduser()
+        ofx_file = Path(ofx_file).expanduser()
     except TypeError:
-        raise argparse.ArgumentTypeError("ERROR: FX file missing!")
-    if not os.path.exists(fx_file):
-        raise argparse.ArgumentTypeError(f"ERROR: FX file not found: {(fx_file)}")
-    return fx_file
+        raise argparse.ArgumentTypeError("ERROR: OFX file missing!")
+    if not os.path.exists(ofx_file):
+        raise argparse.ArgumentTypeError(f"ERROR: OFX file not found: {(ofx_file)}")
+    return ofx_file
 
 def _is_valid_statement_date(statement_date):
     error_msg = "ERROR: Invalid statement date {}".format(statement_date)
@@ -117,7 +117,7 @@ def _parse_args(exit_on_error=True):
     parser.add_argument('--bank-id',
                         required=False,
                         type=_is_valid_bank_id,
-                        help="The bank routing number. Used to validate the FX file.")
+                        help="The bank routing number. Used to validate the OFX file.")
     parser.add_argument('--document-id',
                         required=False,
                         default=None,
@@ -126,10 +126,10 @@ def _parse_args(exit_on_error=True):
                         required=False,
                         type=_set_alloc_columns,
                         help="Colon delimited list of categories to allocate transactions.")
-    parser.add_argument('--fx-file',
+    parser.add_argument('--ofx-file',
                         required=True,
-                        type=_is_valid_fx_file,
-                        help="The QFX or OFX file to parse for transactions.")
+                        type=_is_valid_ofx_file,
+                        help="The OFX file to parse for transactions.")
     parser.add_argument('--statement-date',
                         required=True,
                         type=_is_valid_statement_date,
@@ -183,8 +183,8 @@ def _resolve_config(exit_on_error=True, default_config_file=DEFAULT_CONFIG_FILE)
 
     # Missing command line args are filled in from a config file if one is
     # available. Ensure that all requried values end up being populated.
-    if args.fx_file == None:
-        raise argparse.ArgumentTypeError("Error: FX file unknown!")
+    if args.ofx_file == None:
+        raise argparse.ArgumentTypeError("Error: OFX file unknown!")
     if args.statement_date == None:
         raise argparse.ArgumentTypeError("Error: Statement date unknown!")
     if args.credential_dir == None:
@@ -196,11 +196,11 @@ def _resolve_config(exit_on_error=True, default_config_file=DEFAULT_CONFIG_FILE)
 
     return True
 
-def _parse_fx_file():
+def _parse_ofx_file():
     global ofx
 
     parser = OFXTree()
-    with open(args.fx_file, 'rb') as f:
+    with open(args.ofx_file, 'rb') as f:
         parser.parse(f)
     ofx = parser.convert()
 
@@ -592,7 +592,7 @@ def _write_ofx_transactions():
 
 def console_main():
     _resolve_config()
-    _parse_fx_file()
+    _parse_ofx_file()
     _get_google_creds()
 
     _create_spreadsheet()

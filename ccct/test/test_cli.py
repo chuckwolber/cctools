@@ -60,15 +60,15 @@ class TestCommandLineInterface(unittest.TestCase):
                 args.set_alloc_columns(i)
                 self.assertTrue(ccct._parse_args())
 
-    def test_cli_fx_file(self):
+    def test_cli_ofx_file(self):
         args.set_all_required()
-        for i in const.MISSING_FX_FILES:
+        for i in const.MISSING_OFX_FILES:
             with self.subTest(i=i):
-                args.set_fx_file(i)
+                args.set_ofx_file(i)
                 self.assertRaises(argparse.ArgumentError, ccct._parse_args, False)
-        for i in const.VALID_FX_FILES:
+        for i in const.VALID_OFX_FILES:
             with self.subTest(i=i):
-                args.set_fx_file(i)
+                args.set_ofx_file(i)
                 self.assertTrue(ccct._parse_args())
 
     def test_cli_statement_date(self):

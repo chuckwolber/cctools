@@ -30,7 +30,7 @@ argument.
 
 * Information found in the configuration file supplements arguments found on the command line.
 * Command line arguments take precedence over information supplied by the configuration file.
-* Everything but the QFX file and statement date can be supplied via command line or configuration file.
+* Everything but the OFX file and statement date can be supplied via command line or configuration file.
 
 Example config file:
 ```
@@ -61,11 +61,11 @@ ccrec() {
 
     local PROJ=~/path/to/cctools
     local EXEC=${PROJ}/ccct/ccct
-    local QFX="~/path/to/export-${STMT_DATE}.qfx"
+    local OFX="~/path/to/export-${STMT_DATE}.qfx"
 
     if [[ "${STMT_DATE}" =~ ^(19|20)[0-9]{2}(0[1-9]|1[0-2])26$ ]]; then
         source ${CLONE}/.venv/bin/activate
-        ${EXEC} --credential-dir=CHANGEME --fx-file=${QFX} --bank-id=CHANGEME --statement-date=${STMT_DATE} --alloc-columns='CHANGEME' --document-id='CHANGEME'
+        ${EXEC} --credential-dir=CHANGEME --ofx-file=${OFX} --bank-id=CHANGEME --statement-date=${STMT_DATE} --alloc-columns='CHANGEME' --document-id='CHANGEME'
         deactivate
     else
         echo "Error: Invalid statement date!"
@@ -81,11 +81,11 @@ ccrec() {
 
     local PROJ=~/path/to/cctools
     local EXEC=${PROJ}/ccct/ccct
-    local QFX="~/path/to/export-${STMT_DATE}.qfx"
+    local OFX="~/path/to/export-${STMT_DATE}.qfx"
 
     source ${PROJ}/.venv/bin/activate
     if [[ "${STMT_DATE}" =~ ^(19|20)[0-9]{2}(0[1-9]|1[0-2])26$ ]]; then
-        ${EXEC} --fx-file=${QFX} --statement-date=${STMT_DATE}
+        ${EXEC} --ofx-file=${OFX} --statement-date=${STMT_DATE}
     else
         echo "Error: Invalid statement date!"
     fi
@@ -143,7 +143,7 @@ Start by reviewing the usage statement: `./ccct --help`.
 
 Here is an example of what the categorization process looks like:
 ```
-$ ./ccct --credential-dir=${HOME}/.google --fx-file=${HOME}/Downloads/export-20231226.qfx --bank-id=XXXXXXXXX --statement-date=20231226 --alloc-columns='ap:pc:af'
+$ ./ccct --credential-dir=${HOME}/.google --ofx-file=${HOME}/Downloads/export-20231226.qfx --bank-id=XXXXXXXXX --statement-date=20231226 --alloc-columns='ap:pc:af'
 Spreadsheet Created: CreditCardTransactions
 Spreadsheet ID: 2CZrPH3M-Lg-TmD5luXu7loG3svABgfGP23txXbar7dg
 Found 0 worksheet transactions.
@@ -163,7 +163,7 @@ If you use a configuration file to define your allocation columns, you will see
 an additional `?` character that displays a map of long names.
 
 ```
-$ ./ccct --fx-file=${HOME}/Downloads/export-20231226.qfx --statement-date=20231226
+$ ./ccct --ofx-file=${HOME}/Downloads/export-20231226.qfx --statement-date=20231226
 Spreadsheet Created: CreditCardTransactions
 Spreadsheet ID: 2CZrPH3M-Lg-TmD5luXu7loG3svABgfGP23txXbar7dg
 Found 0 worksheet transactions.
