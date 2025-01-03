@@ -27,7 +27,6 @@ DEFAULT_CONFIG_FILE = Path("~/.config/cctools/ccct.config.json").expanduser()
 ACCTTYPE = "CREDITLINE"
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 TITLE = "CreditCardTransactions"
-TRANSACTION_COLUMNS = ["FITID", "DTPOSTED", "TRNTYPE", "TRNAMT", "NAME", "MEMO"]
 
 class Allocation():
     """Single-entry style expense allocation.
@@ -551,8 +550,8 @@ def _create_statement_worksheet():
                         'repeatCell': {
                                 'range': {
                                         'sheet_id': sheet_id,
-                                        'startColumnIndex': TRANSACTION_COLUMNS.index("TRNAMT"),
-                                        'endColumnIndex': TRANSACTION_COLUMNS.index("TRNAMT") + 1
+                                        'startColumnIndex': Transaction.TRANSACTION_COLUMNS.index("TRNAMT"),
+                                        'endColumnIndex': Transaction.TRANSACTION_COLUMNS.index("TRNAMT") + 1
                                 },
                                 'cell': {
                                         'userEnteredFormat': {
@@ -597,14 +596,14 @@ def _get_worksheet_header():
 def _is_statement_worksheet_header_valid():
     if len(_worksheet_header) == 0:
         return True
-    elif _worksheet_header == [TRANSACTION_COLUMNS + _args.alloc_columns]:
+    elif _worksheet_header == [Transaction.TRANSACTION_COLUMNS + _args.alloc_columns]:
         return True
     return False
 
 def _set_statement_worksheet_header():
     range_name = "{}!1:1".format(_args.statement_date)
     try:
-        body = {"values": [TRANSACTION_COLUMNS + _args.alloc_columns]}
+        body = {"values": [Transaction.TRANSACTION_COLUMNS + _args.alloc_columns]}
         result = (
             _service.spreadsheets()
             .values()
@@ -626,7 +625,7 @@ def _create_statement_worksheet_header():
     if not _is_statement_worksheet_header_valid():
         print("ERROR: Worksheet header appears to be invalid.")
         print("\tGot Header:      {}".format(_worksheet_header))
-        print("\tExpected Header: {}".format([TRANSACTION_COLUMNS + _args.alloc_columns]))
+        print("\tExpected Header: {}".format([Transaction.TRANSACTION_COLUMNS + _args.alloc_columns]))
         exit(1)
     if len(_worksheet_header) == 0:
         _set_statement_worksheet_header()
@@ -646,12 +645,23 @@ def _get_statement_worksheet_transactions():
         # returns a truncated transaction. When importing a batch of
         # transactions, truncated transactions fail to be detected and we end up
         # reprocessing old transactions.
-        _worksheet_transactions = [row + [None] * (len(TRANSACTION_COLUMNS) - len(row)) for row in _worksheet_transactions]
+        _worksheet_transactions = [row + [None] * (len(Transaction.TRANSACTION_COLUMNS) - len(row)) for row in _worksheet_transactions]
 
         print(f"Found {(len(_worksheet_transactions))} worksheet transactions.")
     except HttpError as error:
         print(f"An error occurred: {error}")
         return error
+
+def _get_ofx_transactions():
+    global _transactions
+
+    _transactions = []
+    banktranlist = _ofx.bankmsgsrsv1[0].stmtrs.banktranlist
+
+    for t in banktranlist:
+        _transactions.append(Transaction(t))
+
+    return True
 
 def _get_allocations(amount: float):
     allocations = [0] * len(_args.alloc_columns)
@@ -714,18 +724,11 @@ def _get_allocations(amount: float):
 def _allocate_ofx_transactions():
     global _ofx_transactions
 
-    transactions = _ofx.bankmsgsrsv1[0].stmtrs.banktranlist
-    print("Found {} OFX transactions.".format(len(transactions)))
+    print("Found {} OFX transactions.".format(len(_transactions)))
 
     _ofx_transactions = []
-    for i, t in enumerate(transactions):
-        ofx_transaction = [''] * len(TRANSACTION_COLUMNS)
-        ofx_transaction[TRANSACTION_COLUMNS.index("FITID")]    = t.fitid
-        ofx_transaction[TRANSACTION_COLUMNS.index("DTPOSTED")] = t.dtposted.isoformat()
-        ofx_transaction[TRANSACTION_COLUMNS.index("TRNTYPE")]  = t.trntype
-        ofx_transaction[TRANSACTION_COLUMNS.index("TRNAMT")]   = str(t.trnamt)
-        ofx_transaction[TRANSACTION_COLUMNS.index("NAME")]     = t.name
-        ofx_transaction[TRANSACTION_COLUMNS.index("MEMO")]     = t.memo
+    for i, t in enumerate(_transactions):
+        ofx_transaction = t.to_list()
 
         # Due to some institutions occasionally reusing FITID values we are
         # forced to compare the entire transaction tuple rather than just the
@@ -734,13 +737,8 @@ def _allocate_ofx_transactions():
         # exact same dollar value, but there is nothing we can do about that
         # short of requiring an unreasonable amount of human intervention.
         if ofx_transaction not in _worksheet_transactions:
-            print("\nClassify transaction {} of {}:".format(i + 1, len(transactions)))
-            print("\tTID:\t{}".format(t.fitid))
-            print("\tDate:\t{}".format(t.dtposted.isoformat()))
-            print("\tType:\t{}".format(t.trntype))
-            print("\tAmount:\t{}".format(t.trnamt))
-            print("\tName:\t{}".format(t.name))
-            print("\tMemo:\t{}".format(t.memo))
+            print("\nClassify transaction {} of {}:".format(i + 1, len(_transactions)))
+            t.print()
 
             # Since this is credit card data, DEBIT transactions are purchases
             # and CREDIT transactions are payments and refunds. From the point
@@ -754,7 +752,7 @@ def _allocate_ofx_transactions():
             allocations = _get_allocations(float(-1*t.trnamt))
             _ofx_transactions.append(ofx_transaction + allocations)
         else:
-            print("Skipping allocated transaction {} of {}:".format(i + 1, len(transactions)))
+            print("Skipping allocated transaction {} of {}:".format(i + 1, len(_transactions)))
 
 def _write_ofx_transactions():
     if len(_ofx_transactions) <= 0:
@@ -794,5 +792,6 @@ def console_main():
     _create_statement_worksheet_header()
 
     _get_statement_worksheet_transactions()
+    _get_ofx_transactions()
     _allocate_ofx_transactions()
     _write_ofx_transactions()
