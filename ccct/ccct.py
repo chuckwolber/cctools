@@ -397,6 +397,10 @@ def _resolve_config(exit_on_error=True, default_config_file=DEFAULT_CONFIG_FILE)
     if _args.alloc_columns == None:
         raise argparse.ArgumentTypeError("Error: Allocation columns unknown!")
 
+    Allocation.init_cols(_args.alloc_columns)
+    if hasattr(_args, 'alloc_columns_map'):
+        Allocation.init_cols_map(_args.alloc_columns_map)
+
     return True
 
 def _parse_ofx_file():
@@ -649,16 +653,6 @@ def _get_statement_worksheet_transactions():
         print(f"An error occurred: {error}")
         return error
 
-def _display_alloc_column_map_key(key):
-    print("\t" + key + ":\t" + _args.alloc_columns_map[key])
-
-def _display_alloc_column_map(key=None):
-    if key == None:
-        for key in _args.alloc_columns_map.keys():
-            _display_alloc_column_map_key(key)
-    else:
-            _display_alloc_column_map_key(key)
-
 def _get_allocations(amount: float):
     allocations = [0] * len(_args.alloc_columns)
     original_amount = amount
@@ -682,7 +676,7 @@ def _get_allocations(amount: float):
             col = alloc[0]
 
             if col == "?":
-                _display_alloc_column_map()
+                Allocation.print_cols_map()
                 continue
             elif col not in _args.alloc_columns:
                 continue
@@ -692,7 +686,7 @@ def _get_allocations(amount: float):
 
             if len(alloc) > 1:
                 if alloc[1] == "?":
-                    _display_alloc_column_map(alloc[0])
+                    Allocation.print_cols_map(alloc[0])
                     continue
                 try:
                     amt = float(alloc[1])
