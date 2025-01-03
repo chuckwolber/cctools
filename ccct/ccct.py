@@ -663,93 +663,54 @@ def _get_ofx_transactions():
 
     return True
 
-def _get_allocations(amount: float):
-    allocations = [0] * len(_args.alloc_columns)
-    original_amount = amount
+def _allocate_ofx_transaction(transaction: Transaction, index: int):
+    print("\nAllocate transaction {} of {}:".format(index + 1, len(_transactions)))
+    transaction.print()
 
-    negative = False
-    if amount < 0:
-        negative = True
+    alloc = transaction.allocation
+    while alloc.amount_curr != 0:
+        valid_inputs = alloc.get_paired_allocations()
+        user_input = input(f"Allocate Transaction {(valid_inputs)}[{(alloc.amount_curr)}]: ")
+        user_input_list = user_input.split()
 
-    while amount != 0:
-        paired = [f"{a}({b})" if b != 0 else a for a, b in zip(_args.alloc_columns, allocations)]
-
-        # If we have a map, enable the '?' command to display it.
-        if "alloc_columns_map" in _args and _args.alloc_columns_map != None:
-            paired.append('?')
-
-        valid_inputs = f"[{', '.join(paired)}]"
-        user_input = input(f"Allocate Transaction {(valid_inputs)}[{(amount)}]: ")
-        alloc = user_input.split()
-
-        if len(alloc) > 0:
-            col = alloc[0]
-
-            if col == "?":
+        if len(user_input_list) == 1:
+            category = user_input_list[0]
+            if category == "?":
                 Allocation.print_cols_map()
                 continue
-            elif col not in _args.alloc_columns:
+            alloc.allocate_amount(category=category)
+        elif len(user_input_list) == 2:
+            category = user_input_list[0]
+            amount = user_input_list[1]
+            if str(amount) == "?":
+                Allocation.print_cols_map(key=category)
                 continue
+            alloc.allocate_amount(category=category, amount=amount)
 
-            alloc_index = _args.alloc_columns.index(col)
-            amt = amount
+    # Check for arithmetic errors.
+    if alloc.get_allocations_sum() != alloc.amount_orig:
+        raise Exception("Error: Transaction incorrectly allocated {} != {}".format(alloc.allocations, alloc.amount_orig))
 
-            if len(alloc) > 1:
-                if alloc[1] == "?":
-                    Allocation.print_cols_map(alloc[0])
-                    continue
-                try:
-                    amt = float(alloc[1])
-
-                    # Credit Card DEBITS cannot be allocated as payment DEBITS
-                    # and vice versa.
-                    if (negative and amt > 0) or (not negative and amt < 0):
-                        continue
-
-                    if negative and amt < amount:
-                        amt = amount
-                    elif not negative and amt > amount:
-                        amt = amount
-                except ValueError:
-                    continue
-
-            amount = amount + allocations[alloc_index]
-            amount = round(amount - amt, 2)
-            allocations[alloc_index] = amt
-
-    if round(sum(allocations),2) != original_amount:
-        raise Exception("Error: Transaction incorrectly allocated {} != {}".format(allocations, original_amount))
-    return ['' if x == 0 else x for x in allocations]
+    return alloc.to_list()
 
 def _allocate_ofx_transactions():
     global _ofx_transactions
-
     print("Found {} OFX transactions.".format(len(_transactions)))
 
     _ofx_transactions = []
     for i, t in enumerate(_transactions):
         ofx_transaction = t.to_list()
 
-        # Due to some institutions occasionally reusing FITID values we are
-        # forced to compare the entire transaction tuple rather than just the
-        # FITID as the OFX specification originally intended. This approach will
-        # fail if two affected transactions during a statement period have the
-        # exact same dollar value, but there is nothing we can do about that
-        # short of requiring an unreasonable amount of human intervention.
+        # Testing a transaction for prior categorization should be as simple as
+        # looking for an existing FITID value. Section 3.2.3 of the OFX v2.3
+        # specification says that, "FITIDs must be unique within the scope of an
+        # account". Unfortunately, some institutions occasionally reuse FITID
+        # values, so we are forced to compare the entire transaction tuple. This
+        # approach will fail if two affected transactions during a statement
+        # period have identical tuples, but there is nothing we can do about
+        # that short of requiring an unreasonable amount of human intervention.
         if ofx_transaction not in _worksheet_transactions:
-            print("\nClassify transaction {} of {}:".format(i + 1, len(_transactions)))
-            t.print()
-
-            # Since this is credit card data, DEBIT transactions are purchases
-            # and CREDIT transactions are payments and refunds. From the point
-            # of view of the card's balance, a CREDIT transaction is a DEBIT on
-            # the card's balance, and a DEBIT transaction is a CREDIT on the
-            # card's balance. From the user's point of view, we invert the sign
-            # on the transaction amount so card transaction DEBITs are
-            # categorized as a CREDIT "owed" to the card (and vice versa). This
-            # allows the user to view transactions in terms of the amount they
-            # owe *TO* the credit card.
-            allocations = _get_allocations(float(-1*t.trnamt))
+            allocations = _allocate_ofx_transaction(transaction=t, index=i)
             _ofx_transactions.append(ofx_transaction + allocations)
         else:
             print("Skipping allocated transaction {} of {}:".format(i + 1, len(_transactions)))
