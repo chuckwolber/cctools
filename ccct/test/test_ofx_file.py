@@ -15,8 +15,8 @@ class TestFXFile(unittest.TestCase):
 
     def setUp(self):
         sys.argv = sys.argv[0:1]
-        ccct.args = None
-        ccct.ofx = None
+        ccct._args = None
+        ccct._ofx = None
 
     def tearDown(self):
         sys.argv = self.argv
