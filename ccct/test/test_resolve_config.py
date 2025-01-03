@@ -13,7 +13,7 @@ class TestResolveConfig(unittest.TestCase):
 
     def setUp(self):
         sys.argv = sys.argv[0:1]
-        ccct.args = None
+        ccct._args = None
 
     def tearDown(self):
         sys.argv = self.argv

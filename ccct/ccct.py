@@ -105,7 +105,7 @@ def _is_valid_config_file(config_file, schema_file=SCHEMA_FILE):
     return config
 
 def _parse_args(exit_on_error=True):
-    global args
+    global _args
 
     parser = argparse.ArgumentParser(
             description="Categorize Credit Card Transactions",
@@ -139,7 +139,7 @@ def _parse_args(exit_on_error=True):
                         default=DEFAULT_CONFIG_FILE,
                         type=_is_valid_config_file,
                         help="JSON formatted config file. See docs for details.")
-    args = parser.parse_args()
+    _args = parser.parse_args()
     return True
 
 def _load_from_config(default_config_file=DEFAULT_CONFIG_FILE):
@@ -150,30 +150,30 @@ def _load_from_config(default_config_file=DEFAULT_CONFIG_FILE):
     Command line arguments always take precedence over configuration file
     provided values.
     """
-    if 'args' not in globals():
+    if '_args' not in globals():
         raise argparse.ArgumentError("ERROR: Argument object not found!")
 
-    if not isinstance(args.config_file, dict):
+    if not isinstance(_args.config_file, dict):
         if default_config_file is not None and os.path.exists(default_config_file):
-            args.config_file = _is_valid_config_file(str(default_config_file))
+            _args.config_file = _is_valid_config_file(str(default_config_file))
         else:
             return False
 
-    if args.credential_dir == None and "credential_dir" in args.config_file:
-        args.credential_dir = _is_valid_credential_dir(args.config_file['credential_dir'])
+    if _args.credential_dir == None and "credential_dir" in _args.config_file:
+        _args.credential_dir = _is_valid_credential_dir(_args.config_file['credential_dir'])
 
-    if args.bank_id == None and "bank_id" in args.config_file:
-        args.bank_id = _is_valid_bank_id(str(args.config_file['bank_id']))
+    if _args.bank_id == None and "bank_id" in _args.config_file:
+        _args.bank_id = _is_valid_bank_id(str(_args.config_file['bank_id']))
 
-    if args.document_id == None and "document_id" in args.config_file:
-        args.document_id = args.config_file['document_id']
+    if _args.document_id == None and "document_id" in _args.config_file:
+        _args.document_id = _args.config_file['document_id']
 
-    if args.alloc_columns == None and "alloc_columns" in args.config_file:
-        args.alloc_columns = []
-        args.alloc_columns_map = {}
-        for c in args.config_file['alloc_columns']:
-            args.alloc_columns.append(c['short'])
-            args.alloc_columns_map[c['short']] = c['long']
+    if _args.alloc_columns == None and "alloc_columns" in _args.config_file:
+        _args.alloc_columns = []
+        _args.alloc_columns_map = {}
+        for c in _args.config_file['alloc_columns']:
+            _args.alloc_columns.append(c['short'])
+            _args.alloc_columns_map[c['short']] = c['long']
 
     return True
 
@@ -183,43 +183,42 @@ def _resolve_config(exit_on_error=True, default_config_file=DEFAULT_CONFIG_FILE)
 
     # Missing command line args are filled in from a config file if one is
     # available. Ensure that all requried values end up being populated.
-    if args.ofx_file == None:
+    if _args.ofx_file == None:
         raise argparse.ArgumentTypeError("Error: OFX file unknown!")
-    if args.statement_date == None:
+    if _args.statement_date == None:
         raise argparse.ArgumentTypeError("Error: Statement date unknown!")
-    if args.credential_dir == None:
+    if _args.credential_dir == None:
         raise argparse.ArgumentTypeError("Error: Credential directory unknown!")
-    if args.bank_id == None:
+    if _args.bank_id == None:
         raise argparse.ArgumentTypeError("Error: Bank ID unknown!")
-    if args.alloc_columns == None:
+    if _args.alloc_columns == None:
         raise argparse.ArgumentTypeError("Error: Allocation columns unknown!")
 
     return True
 
 def _parse_ofx_file():
-    global ofx
+    global _ofx
 
     parser = OFXTree()
-    with open(args.ofx_file, 'rb') as f:
+    with open(_args.ofx_file, 'rb') as f:
         parser.parse(f)
-    ofx = parser.convert()
+    _ofx = parser.convert()
 
-    ofx_bank_id = ofx.bankmsgsrsv1[0].stmtrs.bankacctfrom.bankid
-    ofx_accttype = ofx.bankmsgsrsv1[0].stmtrs.bankacctfrom.accttype
+    ofx_bank_id = _ofx.bankmsgsrsv1[0].stmtrs.bankacctfrom.bankid
+    ofx_accttype = _ofx.bankmsgsrsv1[0].stmtrs.bankacctfrom.accttype
 
-    if ofx_bank_id != args.bank_id:
-        raise Exception("Error: Invalid BankID. Got {}, expected {}".format(ofx_bank_id, args.bank_id))
+    if ofx_bank_id != _args.bank_id:
+        raise Exception("Error: Invalid BankID. Got {}, expected {}".format(ofx_bank_id, _args.bank_id))
     if ofx_accttype != ACCTTYPE:
         raise Exception("Error: Invalid account type. Got {}, expected {}".format(ofx_accttype, ACCTTYPE))
 
     return True
 
 def _get_google_creds():
-    global creds
-    global service
+    global _service
 
-    credentials_file = os.path.join(args.credential_dir, "credentials.json")
-    token_file = os.path.join(args.credential_dir, "token.json")
+    credentials_file = os.path.join(_args.credential_dir, "credentials.json")
+    token_file = os.path.join(_args.credential_dir, "token.json")
 
     creds = None
     if os.path.exists(token_file):
@@ -236,31 +235,31 @@ def _get_google_creds():
             credentials_file, SCOPES
         )
         creds = flow.run_local_server(port=0)
-    service = build("sheets", "v4", credentials=creds)
+    _service = build("sheets", "v4", credentials=creds)
 
     with open(token_file, "w") as token:
       token.write(creds.to_json())
 
 def _create_spreadsheet():
-    global document_id
-    global spreadsheet
+    global _document_id
+    global _spreadsheet
 
     try:
-        if args.document_id != None:
-            document_id = args.document_id
-            spreadsheet = service.spreadsheets().get(spreadsheetId=document_id).execute()
+        if _args.document_id != None:
+            _document_id = _args.document_id
+            _spreadsheet = _service.spreadsheets().get(spreadsheetId=_document_id).execute()
             print(f"Spreadsheet Opened: {(TITLE)}")
         else:
-            spreadsheet = (
-                service.spreadsheets()
+            _spreadsheet = (
+                _service.spreadsheets()
                     .create(body={"properties": {"title": TITLE}},
                             fields="spreadsheetId")
                         .execute()
             )
-            document_id = spreadsheet.get('spreadsheetId')
+            _document_id = _spreadsheet.get('spreadsheetId')
             print(f"Spreadsheet Created and Opened: {(TITLE)}")
 
-        print(f"Spreadsheet ID: {(spreadsheet.get('spreadsheetId'))}")
+        print(f"Spreadsheet ID: {(_spreadsheet.get('spreadsheetId'))}")
     except HttpError as error:
         print(f"An error occurred: {error}")
         return error
@@ -274,7 +273,7 @@ def _get_sheet_id(title):
     can be created at a particular position index, but accessing and modifying
     worksheet contents should be done via the sheet ID.
     """
-    for sheet in spreadsheet.get('sheets', ''):
+    for sheet in _spreadsheet.get('sheets', ''):
         if sheet['properties']['title'] == title:
             return sheet['properties']['sheetId']
     return None
@@ -292,34 +291,34 @@ def _rename_worksheet(old_title: str, new_title: str):
                         }
                 }]
         }
-        service.spreadsheets().batchUpdate(
-                spreadsheetId=document_id, body=request_body).execute()
+        _service.spreadsheets().batchUpdate(
+                spreadsheetId=_document_id, body=request_body).execute()
     except HttpError as error:
         print(f"An error occurred: {error}")
         return error
 
 def _create_statement_worksheet():
     try:
-        sheets = spreadsheet.get('sheets', '')
+        sheets = _spreadsheet.get('sheets', '')
         sheet_names = [sheet['properties']['title'] for sheet in sheets]
 
         response = None
         sheet_id = None
-        if args.document_id == None:
-            _rename_worksheet("Sheet1", args.statement_date)
-        elif args.statement_date not in sheet_names:
+        if _args.document_id == None:
+            _rename_worksheet("Sheet1", _args.statement_date)
+        elif _args.statement_date not in sheet_names:
             request_body = {
                 'requests': [{
                         'addSheet': {
                                 'properties': {
-                                        'title': args.statement_date,
+                                        'title': _args.statement_date,
                                         'index': 0
                                 }
                         }
                 }]
             }
-            response = service.spreadsheets().batchUpdate(
-                        spreadsheetId=document_id, body=request_body).execute()
+            response = _service.spreadsheets().batchUpdate(
+                        spreadsheetId=_document_id, body=request_body).execute()
 
             # On newly created worksheets, sheet_id is not immediately
             # discoverable without looking at the batch response object.
@@ -339,7 +338,7 @@ def _create_statement_worksheet():
         # more sense to keep the format consistent with the original and avoid
         # making any assumptions.
         if sheet_id == None:
-            sheet_id = _get_sheet_id(args.statement_date)
+            sheet_id = _get_sheet_id(_args.statement_date)
         request_body = {
                 'requests': [{
                         'repeatCell': {
@@ -371,39 +370,39 @@ def _create_statement_worksheet():
                         }
                 }]
         }
-        service.spreadsheets().batchUpdate(
-                spreadsheetId=document_id, body=request_body).execute()
+        _service.spreadsheets().batchUpdate(
+                spreadsheetId=_document_id, body=request_body).execute()
     except HttpError as error:
         print(f"An error occurred: {error}")
         return error
 
 def _get_worksheet_header():
-    global worksheet_header
+    global _worksheet_header
 
     try:
-        range_name = "{}!1:1".format(args.statement_date)
-        result = service.spreadsheets().values().get(spreadsheetId=document_id, range=range_name).execute()
-        worksheet_header = result.get('values', [])
+        range_name = "{}!1:1".format(_args.statement_date)
+        result = _service.spreadsheets().values().get(spreadsheetId=_document_id, range=range_name).execute()
+        _worksheet_header = result.get('values', [])
     except HttpError as error:
         print(f"An error occurred: {error}")
         return error
 
 def _is_statement_worksheet_header_valid():
-    if len(worksheet_header) == 0:
+    if len(_worksheet_header) == 0:
         return True
-    elif worksheet_header == [TRANSACTION_COLUMNS + args.alloc_columns]:
+    elif _worksheet_header == [TRANSACTION_COLUMNS + _args.alloc_columns]:
         return True
     return False
 
 def _set_statement_worksheet_header():
-    range_name = "{}!1:1".format(args.statement_date)
+    range_name = "{}!1:1".format(_args.statement_date)
     try:
-        body = {"values": [TRANSACTION_COLUMNS + args.alloc_columns]}
+        body = {"values": [TRANSACTION_COLUMNS + _args.alloc_columns]}
         result = (
-            service.spreadsheets()
+            _service.spreadsheets()
             .values()
             .update(
-                spreadsheetId=document_id,
+                spreadsheetId=_document_id,
                 range=range_name,
                 valueInputOption="USER_ENTERED",
                 body=body,
@@ -419,46 +418,46 @@ def _create_statement_worksheet_header():
     _get_worksheet_header()
     if not _is_statement_worksheet_header_valid():
         print("ERROR: Worksheet header appears to be invalid.")
-        print("\tGot Header:      {}".format(worksheet_header))
-        print("\tExpected Header: {}".format([TRANSACTION_COLUMNS + args.alloc_columns]))
+        print("\tGot Header:      {}".format(_worksheet_header))
+        print("\tExpected Header: {}".format([TRANSACTION_COLUMNS + _args.alloc_columns]))
         exit(1)
-    if len(worksheet_header) == 0:
+    if len(_worksheet_header) == 0:
         _set_statement_worksheet_header()
 
 def _get_statement_worksheet_transactions():
-    global worksheet_transactions
+    global _worksheet_transactions
 
     try:
-        range_name = "{}!A:F".format(args.statement_date)
-        result = service.spreadsheets().values().get(spreadsheetId=document_id, range=range_name).execute()
-        worksheet_transactions = result.get('values', [])
+        range_name = "{}!A:F".format(_args.statement_date)
+        result = _service.spreadsheets().values().get(spreadsheetId=_document_id, range=range_name).execute()
+        _worksheet_transactions = result.get('values', [])
 
         # Delete the header.
-        del worksheet_transactions[0]
+        del _worksheet_transactions[0]
 
         # If the last field is empty (usually the memo field), google sheets
         # returns a truncated transaction. When importing a batch of
         # transactions, truncated transactions fail to be detected and we end up
         # reprocessing old transactions.
-        worksheet_transactions = [row + [None] * (len(TRANSACTION_COLUMNS) - len(row)) for row in worksheet_transactions]
+        _worksheet_transactions = [row + [None] * (len(TRANSACTION_COLUMNS) - len(row)) for row in _worksheet_transactions]
 
-        print(f"Found {(len(worksheet_transactions))} worksheet transactions.")
+        print(f"Found {(len(_worksheet_transactions))} worksheet transactions.")
     except HttpError as error:
         print(f"An error occurred: {error}")
         return error
 
 def _display_alloc_column_map_key(key):
-    print("\t" + key + ":\t" + args.alloc_columns_map[key])
+    print("\t" + key + ":\t" + _args.alloc_columns_map[key])
 
 def _display_alloc_column_map(key=None):
     if key == None:
-        for key in args.alloc_columns_map.keys():
+        for key in _args.alloc_columns_map.keys():
             _display_alloc_column_map_key(key)
     else:
             _display_alloc_column_map_key(key)
 
 def _get_allocations(amount: float):
-    allocations = [0] * len(args.alloc_columns)
+    allocations = [0] * len(_args.alloc_columns)
     original_amount = amount
 
     negative = False
@@ -466,10 +465,10 @@ def _get_allocations(amount: float):
         negative = True
 
     while amount != 0:
-        paired = [f"{a}({b})" if b != 0 else a for a, b in zip(args.alloc_columns, allocations)]
+        paired = [f"{a}({b})" if b != 0 else a for a, b in zip(_args.alloc_columns, allocations)]
 
         # If we have a map, enable the '?' command to display it.
-        if "alloc_columns_map" in args and args.alloc_columns_map != None:
+        if "alloc_columns_map" in _args and _args.alloc_columns_map != None:
             paired.append('?')
 
         valid_inputs = f"[{', '.join(paired)}]"
@@ -482,10 +481,10 @@ def _get_allocations(amount: float):
             if col == "?":
                 _display_alloc_column_map()
                 continue
-            elif col not in args.alloc_columns:
+            elif col not in _args.alloc_columns:
                 continue
 
-            alloc_index = args.alloc_columns.index(col)
+            alloc_index = _args.alloc_columns.index(col)
             amt = amount
 
             if len(alloc) > 1:
@@ -516,12 +515,12 @@ def _get_allocations(amount: float):
     return ['' if x == 0 else x for x in allocations]
 
 def _allocate_ofx_transactions():
-    global ofx_transactions
+    global _ofx_transactions
 
-    transactions = ofx.bankmsgsrsv1[0].stmtrs.banktranlist
+    transactions = _ofx.bankmsgsrsv1[0].stmtrs.banktranlist
     print("Found {} OFX transactions.".format(len(transactions)))
 
-    ofx_transactions = []
+    _ofx_transactions = []
     for i, t in enumerate(transactions):
         ofx_transaction = [''] * len(TRANSACTION_COLUMNS)
         ofx_transaction[TRANSACTION_COLUMNS.index("FITID")]    = t.fitid
@@ -537,7 +536,7 @@ def _allocate_ofx_transactions():
         # fail if two affected transactions during a statement period have the
         # exact same dollar value, but there is nothing we can do about that
         # short of requiring an unreasonable amount of human intervention.
-        if ofx_transaction not in worksheet_transactions:
+        if ofx_transaction not in _worksheet_transactions:
             print("\nClassify transaction {} of {}:".format(i + 1, len(transactions)))
             print("\tTID:\t{}".format(t.fitid))
             print("\tDate:\t{}".format(t.dtposted.isoformat()))
@@ -556,28 +555,26 @@ def _allocate_ofx_transactions():
             # allows the user to view transactions in terms of the amount they
             # owe *TO* the credit card.
             allocations = _get_allocations(float(-1*t.trnamt))
-            ofx_transactions.append(ofx_transaction + allocations)
+            _ofx_transactions.append(ofx_transaction + allocations)
         else:
             print("Skipping allocated transaction {} of {}:".format(i + 1, len(transactions)))
 
 def _write_ofx_transactions():
-    global ofx_transactions
-
-    if len(ofx_transactions) <= 0:
+    if len(_ofx_transactions) <= 0:
         print("No transactions to write...")
         return 0
 
-    range_name = "{}!R{}C1:R{}C{}".format(args.statement_date,
-                        len(worksheet_transactions) + 2,
-                        len(worksheet_transactions) + 1 + len(ofx_transactions),
-                        len(ofx_transactions[0]))
+    range_name = "{}!R{}C1:R{}C{}".format(_args.statement_date,
+                        len(_worksheet_transactions) + 2,
+                        len(_worksheet_transactions) + 1 + len(_ofx_transactions),
+                        len(_ofx_transactions[0]))
     try:
-        body = {"values": ofx_transactions}
+        body = {"values": _ofx_transactions}
         result = (
-            service.spreadsheets()
+            _service.spreadsheets()
             .values()
             .update(
-                spreadsheetId=document_id,
+                spreadsheetId=_document_id,
                 range=range_name,
                 valueInputOption="USER_ENTERED",
                 body=body,

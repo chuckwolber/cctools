@@ -15,7 +15,7 @@ class TestLoadFromConfig(unittest.TestCase):
 
     def setUp(self):
         sys.argv = sys.argv[0:1]
-        ccct.args = None
+        ccct._args = None
 
     def tearDown(self):
         sys.argv = self.argv
@@ -60,11 +60,11 @@ class TestLoadFromConfig(unittest.TestCase):
         self.assertTrue(ccct._load_from_config(const.VALID_CONFIG))
 
         # Ensure CLI values override config file values.
-        self.assertTrue(ccct.args.credential_dir == Path(const.VALID_CREDENTIAL_DIRS[0]).expanduser())
-        self.assertTrue(ccct.args.bank_id == const.VALID_BANK_IDS[0])
-        self.assertTrue(ccct.args.document_id == const.VALID_DOCUMENT_ID)
+        self.assertTrue(ccct._args.credential_dir == Path(const.VALID_CREDENTIAL_DIRS[0]).expanduser())
+        self.assertTrue(ccct._args.bank_id == const.VALID_BANK_IDS[0])
+        self.assertTrue(ccct._args.document_id == const.VALID_DOCUMENT_ID)
 
         # Belt and suspenders to potentially catch changes to assets.
-        self.assertFalse(ccct.args.credential_dir == Path("~/.google").expanduser())
-        self.assertFalse(ccct.args.bank_id == "314074269")
-        self.assertFalse(ccct.args.document_id == "2CZrPH3M-Lg-TmD5luXu7loG3svABgfGP23txXbar7dg")
+        self.assertFalse(ccct._args.credential_dir == Path("~/.google").expanduser())
+        self.assertFalse(ccct._args.bank_id == "314074269")
+        self.assertFalse(ccct._args.document_id == "2CZrPH3M-Lg-TmD5luXu7loG3svABgfGP23txXbar7dg")

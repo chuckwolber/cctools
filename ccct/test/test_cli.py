@@ -36,7 +36,7 @@ class TestCommandLineInterface(unittest.TestCase):
             with self.subTest(i=i):
                 args.set_credential_dir(i)
                 self.assertTrue(ccct._parse_args())
-                self.assertIsInstance(ccct.args.credential_dir, Path)
+                self.assertIsInstance(ccct._args.credential_dir, Path)
 
     def test_cli_bank_id(self):
         args.set_all_required()
