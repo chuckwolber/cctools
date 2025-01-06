@@ -75,19 +75,16 @@ NEWFILEUID:NONE
 						<TRNTYPE>DEBIT
 						<DTPOSTED>20241101120000.000
 						<TRNAMT>0.00
-						<FITID>20241126000InterestChargeonPurchases
 						<NAME>Interest Charge on Purchases
 					</STMTTRN>
 					<STMTTRN>
 						<TRNTYPE>DEBIT
-						<DTPOSTED>20241102120000.000
 						<TRNAMT>-1.96
 						<FITID>2445106NS8WXQ9TXV
 						<NAME>ABCDEFG	 123-456
 						<MEMO>ABCDEFG	 800-555-1212 OR
 					</STMTTRN>
 					<STMTTRN>
-						<TRNTYPE>DEBIT
 						<DTPOSTED>20241103120000.000
 						<TRNAMT>0.00
 						<FITID>20241126000Redacted1
@@ -96,7 +93,6 @@ NEWFILEUID:NONE
 					<STMTTRN>
 						<TRNTYPE>DEBIT
 						<DTPOSTED>20241104120000.000
-						<TRNAMT>0.00
 						<FITID>20241126000Redacted2
 						<NAME>Transaction 2
 					</STMTTRN>
@@ -105,7 +101,6 @@ NEWFILEUID:NONE
 						<DTPOSTED>20241105120000.000
 						<TRNAMT>-15.96
 						<FITID>Redacted3
-						<NAME>Transaction 3
 						<MEMO>Memo for Transaction 3
 					</STMTTRN>
 					<STMTTRN>
