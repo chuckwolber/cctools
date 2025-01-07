@@ -59,3 +59,19 @@ class TestFXFile(unittest.TestCase):
         args.set_alloc_columns(const.VALID_ALLOC_COLUMNS[0])
         self.assertTrue(ccct._resolve_config(default_config_file=None))
         self.assertRaises(Exception, ccct._parse_ofx_file)
+
+    def test__parse_ofx_file_invalid_format(self):
+        args.set_ofx_file(const.ASSETS_DIR + "/export.invalid-3.qfx")
+        args.set_statement_date(const.VALID_STATEMENT_DATES[0])
+        args.set_credential_dir(const.VALID_CREDENTIAL_DIRS[0])
+        args.set_bank_id("314074269")
+        args.set_alloc_columns(const.VALID_ALLOC_COLUMNS[0])
+        self.assertTrue(ccct._resolve_config(default_config_file=None))
+        self.assertRaises(Exception, ccct._parse_ofx_file)
+
+    def test__parse_ofx_file_missing_fields(self):
+        args.set_all_required()
+        args.set_ofx_file(const.ASSETS_DIR + "/export.invalid-4.qfx")
+        args.set_config_file(const.VALID_CONFIG)
+        self.assertTrue(ccct._resolve_config(None))
+        self.assertRaises(ValueError, ccct._parse_ofx_file)
