@@ -4,6 +4,7 @@
 
 import argparse
 import json
+import ofxtools
 import os.path
 import re
 
@@ -407,8 +408,15 @@ def _parse_ofx_file():
 
     parser = OFXTree()
     with open(_args.ofx_file, 'rb') as f:
-        parser.parse(f)
-    _ofx = parser.convert()
+        try:
+            parser.parse(f)
+        except IndexError as ie:
+            raise Exception(f"Error: Invalid OFX file. {(str(ie))}")
+
+    try:
+        _ofx = parser.convert()
+    except ofxtools.Types.OFXSpecError as oe:
+        raise ValueError(f"Error: Malformed OFX data. {(str(oe))}")
 
     ofx_bank_id = _ofx.bankmsgsrsv1[0].stmtrs.bankacctfrom.bankid
     ofx_accttype = _ofx.bankmsgsrsv1[0].stmtrs.bankacctfrom.accttype
