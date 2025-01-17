@@ -80,7 +80,9 @@ class Allocation():
 
     def __init__(self, amount: float):
         if self.ALLOC_COLUMNS is None:
-            raise ValueError("Allocation class not initialized. Call `initialize` first.")
+            raise ValueError("Error: Allocation class not initialized. Call `initialize` first.")
+        if not isinstance(amount, float):
+            raise ValueError("Error: Amount is not a floating point value.")
         self.allocation = [0.0] * len(self.ALLOC_COLUMNS)
         self.amount_orig = float(-1*amount)
         self.amount_curr = self.amount_orig
@@ -185,7 +187,7 @@ class Transaction():
     TRANSACTION_COLUMNS = ["FITID", "DTPOSTED", "TRNTYPE", "TRNAMT", "NAME", "MEMO"]
 
     fitid: str
-    dtposted: str
+    dtposted: datetime
     trntype: str
     trnamt: float
     name: str
@@ -194,12 +196,17 @@ class Transaction():
 
     def __init__(self, transaction):
         self.fitid      = transaction.fitid
-        self.dtposted   = transaction.dtposted.isoformat()
+        self.dtposted   = transaction.dtposted
         self.trntype    = transaction.trntype
-        self.trnamt     = transaction.trnamt
+        self.trnamt     = float(transaction.trnamt)
         self.name       = transaction.name
         self.memo       = transaction.memo
         self.allocation = Allocation(self.trnamt)
+
+        if not isinstance(self.fitid, str):
+            raise ValueError("Error: FITID is not a string.")
+        if not isinstance(self.dtposted, datetime):
+            raise ValueError("Error: DTPOSTED is not a datetime object.")
 
         # Currently only supporting CREDIT and DEBIT. Submit a bug if you find
         # examples of others being used. OFX v2.3 section 11.4.4.3 lists the
@@ -214,21 +221,24 @@ class Transaction():
         if self.trntype == "DEBIT"  and self.trnamt > 0:
             raise ValueError("Error: Positive debit detected!\n{}".format(str(transaction)))
 
+        if not isinstance(self.name, str):
+            raise ValueError("Error: NAME is not a string.")
+
     def to_list(self) -> list:
         arr = [''] * len(self.TRANSACTION_COLUMNS)
         arr[self.TRANSACTION_COLUMNS.index("FITID")]    = self.fitid
         arr[self.TRANSACTION_COLUMNS.index("DTPOSTED")] = self.dtposted
         arr[self.TRANSACTION_COLUMNS.index("TRNTYPE")]  = self.trntype
-        arr[self.TRANSACTION_COLUMNS.index("TRNAMT")]   = str(self.trnamt)
+        arr[self.TRANSACTION_COLUMNS.index("TRNAMT")]   = self.trnamt
         arr[self.TRANSACTION_COLUMNS.index("NAME")]     = self.name
         arr[self.TRANSACTION_COLUMNS.index("MEMO")]     = self.memo
         return arr
 
     def print(self):
         print("\tTID:\t{}".format(self.fitid))
-        print("\tDate:\t{}".format(self.dtposted))
+        print("\tDate:\t{}".format(self.dtposted.isoformat()))
         print("\tType:\t{}".format(self.trntype))
-        print("\tAmount:\t{}".format(self.trnamt))
+        print("\tAmount:\t{}".format(str(self.trnamt)))
         print("\tName:\t{}".format(self.name))
         print("\tMemo:\t{}".format(self.memo))
 
