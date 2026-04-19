@@ -3,19 +3,13 @@
 # Categorize credit card transactions and save them to a Google spreadsheet.
 
 import argparse
-import json
 import ofxtools
 import os.path
-import re
 
 from ccct.allocation import Allocation
+from ccct.args import CCConsoleArgs
+from ccct.args import DEFAULT_CONFIG_FILE
 from ccct.transaction import Transaction
-
-from datetime import datetime
-from importlib.resources import files
-from pathlib import Path
-from jsonschema import validate
-from jsonschema.exceptions import ValidationError
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -24,126 +18,15 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from ofxtools.Parser import OFXTree
 
-SCRIPT_DIR = str(Path(__file__).resolve().parent)
-DEFAULT_CONFIG_FILE = Path("~/.config/cctools/ccct.config.json").expanduser()
-SCHEMA_FILE = files("ccct.config").joinpath("ccct.config.schema.json")
-
 ACCTTYPE = "CREDITLINE"
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 TITLE = "CreditCardTransactions"
 
 
-#
-# ActionType functions called from _parse_args(). Neither the arguments nor the
-# firing order can be controlled, so validation is isolated to the bare minimum.
-# Stronger validation happens later on.
-#
-def _is_valid_credential_dir(credential_dir):
-    try:
-        credential_dir = Path(credential_dir).expanduser()
-    except TypeError:
-        raise argparse.ArgumentTypeError("ERROR: Credential dir missing!")
-    if not os.path.exists(credential_dir):
-        raise argparse.ArgumentTypeError(f"ERROR: Credential directory not found: {(credential_dir)}")
-    return credential_dir
-
-def _is_valid_bank_id(bank_id):
-    error_msg = "ERROR: Invalid bank ID {}".format(bank_id)
-    try:
-        if not re.match('^[0-9]{9}$', bank_id):
-            raise argparse.ArgumentTypeError(error_msg)
-    except TypeError:
-        raise argparse.ArgumentTypeError("ERROR: Bank ID missing!")
-    if sum(w * int(n) for w, n in zip([3, 7, 1] * 3, bank_id)) % 10 != 0:
-        raise argparse.ArgumentTypeError(error_msg)
-    return bank_id
-
-def _set_alloc_columns(alloc_columns):
-    try:
-        cols = alloc_columns.split(":")
-    except AttributeError:
-        raise argparse.ArgumentTypeError("ERROR: alloc columns string missing!")
-    if len(cols) <= 1:
-        raise argparse.ArgumentTypeError("ERROR: Two or more allocation columns are required.")
-    return cols
-
-def _is_valid_ofx_file(ofx_file):
-    try:
-        ofx_file = Path(ofx_file).expanduser()
-    except TypeError:
-        raise argparse.ArgumentTypeError("ERROR: OFX file missing!")
-    if not os.path.exists(ofx_file):
-        raise argparse.ArgumentTypeError(f"ERROR: OFX file not found: {(ofx_file)}")
-    return ofx_file
-
-def _is_valid_statement_date(statement_date):
-    error_msg = "ERROR: Invalid statement date {}".format(statement_date)
-    try:
-        if not re.match('^[0-9]{8}$', statement_date):
-            raise argparse.ArgumentTypeError(error_msg)
-    except TypeError:
-        raise argparse.ArgumentTypeError("ERROR: Statement date missing!")
-    if not datetime.strptime(statement_date, '%Y%m%d'):
-        raise argparse.ArgumentTypeError(error_msg)
-    return statement_date
-
-def _is_valid_config_file(config_file, schema_file=SCHEMA_FILE):
-    error_msg = "ERROR: Invalid config file {}".format(config_file)
-    try:
-        config_file = Path(config_file).expanduser()
-        with open(schema_file, "r") as json_schema:
-            schema = json.load(json_schema)
-        with open(config_file, "r") as json_config:
-            config = json.load(json_config)
-    except json.decoder.JSONDecodeError as e:
-        raise argparse.ArgumentTypeError(str(e))
-    except FileNotFoundError as e:
-        raise argparse.ArgumentTypeError(str(e))
-    except TypeError:
-        raise argparse.ArgumentTypeError("ERROR: Invalid config file!")
-
-    try:
-        validate(instance=config, schema=schema)
-    except ValidationError as e:
-        raise argparse.ArgumentTypeError(error_msg + "\n" + str(e))
-    return config
-
 def _parse_args(exit_on_error=True):
     global _args
 
-    parser = argparse.ArgumentParser(
-            description="Categorize Credit Card Transactions",
-            exit_on_error=exit_on_error)
-    parser.add_argument('--credential-dir',
-                        required=False,
-                        type=_is_valid_credential_dir,
-                        help="Google API credential directory.")
-    parser.add_argument('--bank-id',
-                        required=False,
-                        type=_is_valid_bank_id,
-                        help="The bank routing number. Used to validate the OFX file.")
-    parser.add_argument('--document-id',
-                        required=False,
-                        default=None,
-                        help="The Google document ID to write transactions. A new spreadsheet is created if this is omitted.")
-    parser.add_argument('--alloc-columns',
-                        required=False,
-                        type=_set_alloc_columns,
-                        help="Colon delimited list of categories to allocate transactions.")
-    parser.add_argument('--ofx-file',
-                        required=True,
-                        type=_is_valid_ofx_file,
-                        help="The OFX file to parse for transactions.")
-    parser.add_argument('--statement-date',
-                        required=True,
-                        type=_is_valid_statement_date,
-                        help="This is the worksheet that accumulates transactions.")
-    parser.add_argument('--config-file',
-                        required=False,
-                        default=DEFAULT_CONFIG_FILE,
-                        type=_is_valid_config_file,
-                        help="JSON formatted config file. See docs for details.")
-    _args = parser.parse_args()
+    _args = CCConsoleArgs(exit_on_error=exit_on_error).parse()
     return True
 
 def _load_from_config(default_config_file=DEFAULT_CONFIG_FILE):
@@ -159,15 +42,15 @@ def _load_from_config(default_config_file=DEFAULT_CONFIG_FILE):
 
     if not isinstance(_args.config_file, dict):
         if default_config_file is not None and os.path.exists(default_config_file):
-            _args.config_file = _is_valid_config_file(str(default_config_file))
+            _args.config_file = CCConsoleArgs.is_valid_config_file(str(default_config_file))
         else:
             return False
 
     if _args.credential_dir == None and "credential_dir" in _args.config_file:
-        _args.credential_dir = _is_valid_credential_dir(_args.config_file['credential_dir'])
+        _args.credential_dir = CCConsoleArgs.is_valid_credential_dir(_args.config_file['credential_dir'])
 
     if _args.bank_id == None and "bank_id" in _args.config_file:
-        _args.bank_id = _is_valid_bank_id(str(_args.config_file['bank_id']))
+        _args.bank_id = CCConsoleArgs.is_valid_bank_id(str(_args.config_file['bank_id']))
 
     if _args.document_id == None and "document_id" in _args.config_file:
         _args.document_id = _args.config_file['document_id']

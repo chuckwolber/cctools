@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 from pathlib import Path
-from ccct import ccct
+from ccct.args import SCHEMA_FILE
 
 SCRIPT_DIR = str(Path(__file__).resolve().parent)
 ASSETS_DIR = SCRIPT_DIR + "/assets"
@@ -46,4 +46,4 @@ VALID_CONFIG = ASSETS_DIR + "/config.valid.json"
 MISSING_SCHEMA_FILES = [None, INVALID_DIR, INVALID_DIR + "/this.is.not.a.schema.file.json"]
 INVALID_SCHEMA_FILES = [ASSETS_DIR + "/schema.invalid.json"]
 INVALID_SCHEMA = MISSING_SCHEMA_FILES + INVALID_SCHEMA_FILES
-VALID_SCHEMA_FILES = [ccct.SCHEMA_FILE]
+VALID_SCHEMA_FILES = [SCHEMA_FILE]
