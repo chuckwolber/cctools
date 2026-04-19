@@ -5,7 +5,7 @@ import os
 import unittest
 
 from . import const
-from .. import ccct
+from ccct import ccct
 
 class TestValidationAction(unittest.TestCase):
     def test__is_valid_credential_dir(self):

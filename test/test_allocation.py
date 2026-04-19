@@ -2,7 +2,7 @@
 
 import unittest
 
-from .. import ccct
+from ccct.allocation import Allocation
 
 class TestAllocation(unittest.TestCase):
     invalid_col = "x"
@@ -11,20 +11,20 @@ class TestAllocation(unittest.TestCase):
     amount = 1.25
 
     def tearDown(self):
-        ccct.Allocation.ALLOC_COLUMNS = None
-        ccct.Allocation.ALLOC_COLUMNS_MAP = None
+        Allocation.ALLOC_COLUMNS = None
+        Allocation.ALLOC_COLUMNS_MAP = None
 
     def test_allocation_uninitialized(self):
-        self.assertRaises(ValueError, ccct.Allocation, 1.11)
+        self.assertRaises(ValueError, Allocation, 1.11)
 
     def test_allocation_invalid_float(self):
-        ccct.Allocation.init_cols([])
-        self.assertRaises(ValueError, ccct.Allocation, amount="NOTAFLOAT")
+        Allocation.init_cols([])
+        self.assertRaises(ValueError, Allocation, amount="NOTAFLOAT")
 
     def test_allocation_init(self):
         num_cols = 6
-        ccct.Allocation.init_cols([0.0]*num_cols)
-        a = ccct.Allocation(self.amount)
+        Allocation.init_cols([0.0]*num_cols)
+        a = Allocation(self.amount)
         self.assertEqual(len(a.allocation), num_cols)
         self.assertEqual(a.amount_orig, -1*self.amount)
         self.assertEqual(a.amount_orig, a.amount_curr)
@@ -33,61 +33,61 @@ class TestAllocation(unittest.TestCase):
         self.assertEqual(a.get_allocations_sum(), 0.0)
 
     def test_allocation_cols(self):
-        ccct.Allocation.init_cols(self.cols)
-        a = ccct.Allocation(self.amount)
+        Allocation.init_cols(self.cols)
+        a = Allocation(self.amount)
         self.assertEqual(a.get_paired_allocations(), '[' + ', '.join(self.cols) + ']')
         self.assertEqual(a.to_list(), ['']*len(self.cols))
         self.assertEqual(a.get_allocations_sum(), 0.0)
 
     def test_allocation_cols_map(self):
-        ccct.Allocation.init_cols(self.cols)
-        ccct.Allocation.init_cols_map(self.cols_map)
-        a = ccct.Allocation(self.amount)
+        Allocation.init_cols(self.cols)
+        Allocation.init_cols_map(self.cols_map)
+        a = Allocation(self.amount)
         self.assertEqual(a.get_paired_allocations(), '[' + ', '.join(self.cols + ['?']) + ']')
         self.assertEqual(a.to_list(), ['']*len(self.cols))
         self.assertEqual(a.get_allocations_sum(), 0.0)
 
     def test_allocation_valid_catetory(self):
-        ccct.Allocation.init_cols(self.cols)
-        a = ccct.Allocation(self.amount)
+        Allocation.init_cols(self.cols)
+        a = Allocation(self.amount)
         for col in self.cols:
             self.assertTrue(a._Allocation__is_valid_category(col))
 
     def test_allocation_amount_invalid_col(self):
-        ccct.Allocation.init_cols(self.cols)
-        a = ccct.Allocation(self.amount)
+        Allocation.init_cols(self.cols)
+        a = Allocation(self.amount)
         a.allocate_amount(self.invalid_col, -1*self.amount)
         self.assertEqual(a.to_list(), ['']*len(self.cols))
         self.assertEqual(a.get_paired_allocations(), '[' + ', '.join(self.cols) + ']')
         self.assertEqual(a.get_allocations_sum(), 0.0)
 
     def test_allocation_amount_invalid(self):
-        ccct.Allocation.init_cols(self.cols)
-        a = ccct.Allocation(-1*self.amount)
+        Allocation.init_cols(self.cols)
+        a = Allocation(-1*self.amount)
         a.allocate_amount(self.cols[0], "NOTANUMBER")
         self.assertEqual(a.to_list(), ['']*len(self.cols))
         self.assertEqual(a.get_paired_allocations(), '[' + ', '.join(self.cols) + ']')
         self.assertEqual(a.get_allocations_sum(), 0.0)
 
     def test_allocation_amount_wrong_sign_1(self):
-        ccct.Allocation.init_cols(self.cols)
-        a = ccct.Allocation(self.amount)
+        Allocation.init_cols(self.cols)
+        a = Allocation(self.amount)
         a.allocate_amount(self.cols[0], self.amount)
         self.assertEqual(a.to_list(), ['']*len(self.cols))
         self.assertEqual(a.get_paired_allocations(), '[' + ', '.join(self.cols) + ']')
         self.assertEqual(a.get_allocations_sum(), 0.0)
 
     def test_allocation_amount_wrong_sign_2(self):
-        ccct.Allocation.init_cols(self.cols)
-        a = ccct.Allocation(-1*self.amount)
+        Allocation.init_cols(self.cols)
+        a = Allocation(-1*self.amount)
         a.allocate_amount(self.cols[0], -1*self.amount)
         self.assertEqual(a.to_list(), ['']*len(self.cols))
         self.assertEqual(a.get_paired_allocations(), '[' + ', '.join(self.cols) + ']')
         self.assertEqual(a.get_allocations_sum(), 0.0)
 
     def test_allocation_amount_equal(self):
-        ccct.Allocation.init_cols(self.cols)
-        a = ccct.Allocation(-1*self.amount)
+        Allocation.init_cols(self.cols)
+        a = Allocation(-1*self.amount)
         allocs = ['']*len(self.cols)
         allocs[0] = self.amount
         z = [f"{a}({b})" if b != '' else a for a, b in zip(self.cols, allocs)]
@@ -97,8 +97,8 @@ class TestAllocation(unittest.TestCase):
         self.assertEqual(a.get_allocations_sum(), allocs[0])
 
     def test_allocation_amount_greater_positive(self):
-        ccct.Allocation.init_cols(self.cols)
-        a = ccct.Allocation(-1*self.amount)
+        Allocation.init_cols(self.cols)
+        a = Allocation(-1*self.amount)
         allocs = ['']*len(self.cols)
         allocs[0] = self.amount
         z = [f"{a}({b})" if b != '' else a for a, b in zip(self.cols, allocs)]
@@ -108,8 +108,8 @@ class TestAllocation(unittest.TestCase):
         self.assertEqual(a.get_allocations_sum(), allocs[0])
 
     def test_allocation_amount_greater_negative(self):
-        ccct.Allocation.init_cols(self.cols)
-        a = ccct.Allocation(self.amount)
+        Allocation.init_cols(self.cols)
+        a = Allocation(self.amount)
         allocs = ['']*len(self.cols)
         allocs[0] = -1*self.amount
         z = [f"{a}({b})" if b != '' else a for a, b in zip(self.cols, allocs)]
@@ -119,8 +119,8 @@ class TestAllocation(unittest.TestCase):
         self.assertEqual(a.get_allocations_sum(), allocs[0])
 
     def test_allocation_amount_multiple(self):
-        ccct.Allocation.init_cols(self.cols)
-        a = ccct.Allocation(-1*self.amount)
+        Allocation.init_cols(self.cols)
+        a = Allocation(-1*self.amount)
         allocs = ['']*len(self.cols)
 
         allocs[0] = 1.0
@@ -138,8 +138,8 @@ class TestAllocation(unittest.TestCase):
         self.assertEqual(a.get_allocations_sum(), self.amount)
 
     def test_allocation_amount_reset(self):
-        ccct.Allocation.init_cols(self.cols)
-        a = ccct.Allocation(-1*self.amount)
+        Allocation.init_cols(self.cols)
+        a = Allocation(-1*self.amount)
         allocs = ['']*len(self.cols)
 
         allocs[2] = 1.0

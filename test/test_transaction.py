@@ -6,7 +6,9 @@ import unittest
 
 from . import args
 from . import const
-from .. import ccct
+from ccct import ccct
+from ccct.allocation import Allocation
+
 
 class TestTransaction(unittest.TestCase):
     class T():
@@ -50,7 +52,7 @@ class TestTransaction(unittest.TestCase):
             self.assertIsInstance(t.trntype, str)
             self.assertIsInstance(t.trnamt, float)
             self.assertIsInstance(t.name, str)
-            self.assertIsInstance(t.allocation, ccct.Allocation)
+            self.assertIsInstance(t.allocation, Allocation)
 
             if t.memo != None:
                 self.assertIsInstance(t.memo, str)

@@ -6,7 +6,7 @@ import unittest
 
 from . import args
 from . import const
-from .. import ccct
+from ccct import ccct
 
 class TestResolveConfig(unittest.TestCase):
     argv = sys.argv
