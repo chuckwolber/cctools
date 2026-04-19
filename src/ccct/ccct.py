@@ -12,6 +12,7 @@ from ccct.allocation import Allocation
 from ccct.transaction import Transaction
 
 from datetime import datetime
+from importlib.resources import files
 from pathlib import Path
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
@@ -24,9 +25,8 @@ from googleapiclient.errors import HttpError
 from ofxtools.Parser import OFXTree
 
 SCRIPT_DIR = str(Path(__file__).resolve().parent)
-CONFIG_DIR = SCRIPT_DIR + "/config"
-SCHEMA_FILE = CONFIG_DIR + "/ccct.config.schema.json"
 DEFAULT_CONFIG_FILE = Path("~/.config/cctools/ccct.config.json").expanduser()
+SCHEMA_FILE = files("ccct.config").joinpath("ccct.config.schema.json")
 
 ACCTTYPE = "CREDITLINE"
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
