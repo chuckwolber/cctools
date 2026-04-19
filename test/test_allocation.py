@@ -47,7 +47,7 @@ class TestAllocation(unittest.TestCase):
         self.assertEqual(a.to_list(), ['']*len(self.cols))
         self.assertEqual(a.get_allocations_sum(), 0.0)
 
-    def test_allocation_valid_catetory(self):
+    def test_allocation_valid_category(self):
         Allocation.init_cols(self.cols)
         a = Allocation(self.amount)
         for col in self.cols:

@@ -28,7 +28,7 @@ class Transaction():
          account is affected, e.g. a <TRNTYPE>DEBIT should have a negative
          <TRNAMT> value."
 
-    Section 11.4.4.1 of the OFX v2.3 specifiction further clarifies:
+    Section 11.4.4.1 of the OFX v2.3 specification further clarifies:
 
         "Transaction amounts are signed from the perspective of the customer.
          For example, a credit card payment is positive while a credit card

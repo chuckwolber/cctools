@@ -286,7 +286,7 @@ spreadsheet URL.
 
 ### Statement Worksheets
 Endlessly accumulating credit card transactions on a single worksheet will
-get unweildy very quickly. The `--statement-date` argument creates a worksheet
+get unwieldy very quickly. The `--statement-date` argument creates a worksheet
 with the statement date as the title and saves the current batch of categorized
 transactions to it. If the named worksheet already exists, any transactions that
 were previously categorized to that worksheet are skipped during the
@@ -318,5 +318,5 @@ occasionally reusing OFX transaction identifiers (FITID). To overcome this,
 transactions are compared as tuples to determine if a particular transaction can
 be skipped as previously categorized. If you determine that your bank is reusing
 transaction identifiers it is best to report the issue to one of their technical
-contacts. I have had some success reporting this problem to my own bank, so teel
+contacts. I have had some success reporting this problem to my own bank, so feel
 free to reach out if you need help.

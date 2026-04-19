@@ -3,7 +3,7 @@
 	"type": "object",
 	"properties": {
 		"credential_dir": {
-			"description": "Google sheets credential directory.",
+			"description": "Google Sheets credential directory.",
 			"type": "string"
 		},
 		"bank_id": {

@@ -126,7 +126,7 @@ class TestTransaction(unittest.TestCase):
         t = self.T(fitid="8423858PG12AM3XZE", dtposted=None, trntype="CREDIT", trnamt=1.11, name=None, memo=None)
         self.assertRaises(ValueError, ccct.Transaction, t)
 
-    def test_trasaction_unknown_type(self):
+    def test_transaction_unknown_type(self):
         args.set_all_required()
         args.set_ofx_file(const.ASSETS_DIR + "/export.valid.qfx")
         args.set_config_file(const.VALID_CONFIG)

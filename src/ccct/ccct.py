@@ -35,7 +35,7 @@ TITLE = "CreditCardTransactions"
 
 #
 # ActionType functions called from _parse_args(). Neither the arguments nor the
-# firing order can be controlled, so validtion is isolated to the bare minimum.
+# firing order can be controlled, so validation is isolated to the bare minimum.
 # Stronger validation happens later on.
 #
 def _is_valid_credential_dir(credential_dir):
@@ -64,7 +64,7 @@ def _set_alloc_columns(alloc_columns):
     except AttributeError:
         raise argparse.ArgumentTypeError("ERROR: alloc columns string missing!")
     if len(cols) <= 1:
-        raise argparse.ArgumentTypeError("ERROR: Two or more allocation colums are required.")
+        raise argparse.ArgumentTypeError("ERROR: Two or more allocation columns are required.")
     return cols
 
 def _is_valid_ofx_file(ofx_file):
@@ -125,7 +125,7 @@ def _parse_args(exit_on_error=True):
     parser.add_argument('--document-id',
                         required=False,
                         default=None,
-                        help="The google document ID to write transactions. A new spreadsheet is created if this is omitted.")
+                        help="The Google document ID to write transactions. A new spreadsheet is created if this is omitted.")
     parser.add_argument('--alloc-columns',
                         required=False,
                         type=_set_alloc_columns,
@@ -186,7 +186,7 @@ def _resolve_config(exit_on_error=True, default_config_file=DEFAULT_CONFIG_FILE)
     _load_from_config(default_config_file=default_config_file)
 
     # Missing command line args are filled in from a config file if one is
-    # available. Ensure that all requried values end up being populated.
+    # available. Ensure that all required values end up being populated.
     if _args.ofx_file == None:
         raise argparse.ArgumentTypeError("Error: OFX file unknown!")
     if _args.statement_date == None:
@@ -344,7 +344,7 @@ def _create_statement_worksheet():
         # characters when digits to the right of the decimal are zero. This
         # makes it difficult to compare transactions to avoid duplication.
         # Format the amount column to the numeric "@" format so the amounts are
-        # effectivey treated as text. One might think they could sidestep this
+        # effectively treated as text. One might think they could sidestep this
         # complication by formatting all transaction amount strings to two
         # decimal places, but the OFX specification (section 3.2.9.1) says
         # little about the number of decimal places we should expect, except to
