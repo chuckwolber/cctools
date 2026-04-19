@@ -4,7 +4,7 @@ from pathlib import Path
 
 SCRIPT_DIR = str(Path(__file__).resolve().parent)
 ASSETS_DIR = SCRIPT_DIR + "/assets"
-CONFIG_DIR = SCRIPT_DIR + "/../config"
+CONFIG_DIR = SCRIPT_DIR + "/assets"
 
 VALID_DIR = ASSETS_DIR
 INVALID_DIR = "/path/that/must/not/exist/DD88DA98-A6D8-4E9A-BE62-356682B25598"

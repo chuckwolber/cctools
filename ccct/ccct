@@ -1,9 +1,0 @@
-#!/usr/bin/env python3
-#
-# SPDX-License-Identifier: MIT
-
-import sys
-from ccct import console_main
-
-if __name__ == '__main__':
-    sys.exit(console_main())
