@@ -358,7 +358,7 @@ def _create_statement_worksheet():
                 'requests': [{
                         'repeatCell': {
                                 'range': {
-                                        'sheet_id': sheet_id,
+                                        'sheetId': sheet_id,
                                         'startColumnIndex': Transaction.TRANSACTION_COLUMNS.index("TRNAMT"),
                                         'endColumnIndex': Transaction.TRANSACTION_COLUMNS.index("TRNAMT") + 1
                                 },
