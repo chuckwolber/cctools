@@ -26,7 +26,7 @@ class CCConsoleArgs:
         self._add_arguments()
 
     @staticmethod
-    def is_valid_credential_dir(credential_dir):
+    def _is_valid_credential_dir(credential_dir):
         try:
             credential_dir = Path(credential_dir).expanduser()
         except TypeError:
@@ -36,7 +36,7 @@ class CCConsoleArgs:
         return credential_dir
 
     @staticmethod
-    def is_valid_bank_id(bank_id):
+    def _is_valid_bank_id(bank_id):
         error_msg = "ERROR: Invalid bank ID {}".format(bank_id)
         try:
             if not re.match('^[0-9]{9}$', bank_id):
@@ -48,7 +48,7 @@ class CCConsoleArgs:
         return bank_id
 
     @staticmethod
-    def set_alloc_columns(alloc_columns):
+    def _set_alloc_columns(alloc_columns):
         try:
             cols = alloc_columns.split(":")
         except AttributeError:
@@ -58,17 +58,17 @@ class CCConsoleArgs:
         return cols
 
     @staticmethod
-    def is_valid_ofx_file(ofx_file):
+    def _is_valid_ofx_file(ofx_file):
         try:
             ofx_file = Path(ofx_file).expanduser()
         except TypeError:
-            raise argparse.ArgumentTypeError("ERROR: OFX file missing!")
+            raise argparse.ArgumentTypeError("ERROR: OFX file argument missing!")
         if not os.path.exists(ofx_file):
             raise argparse.ArgumentTypeError(f"ERROR: OFX file not found: {(ofx_file)}")
         return ofx_file
 
     @staticmethod
-    def is_valid_statement_date(statement_date):
+    def _is_valid_statement_date(statement_date):
         error_msg = "ERROR: Invalid statement date {}".format(statement_date)
         try:
             if not re.match('^[0-9]{8}$', statement_date):
@@ -80,7 +80,7 @@ class CCConsoleArgs:
         return statement_date
 
     @staticmethod
-    def is_valid_config_file(config_file, schema_file=SCHEMA_FILE):
+    def _is_valid_config_file(config_file, schema_file=SCHEMA_FILE):
         error_msg = "ERROR: Invalid config file {}".format(config_file)
         try:
             config_file = Path(config_file).expanduser()
@@ -107,14 +107,21 @@ class CCConsoleArgs:
             setattr(self, key, value)
         return self
 
+    def to_dict(self):
+        return {
+            action.dest: getattr(self, action.dest, None)
+            for action in self._parser._actions
+            if action.dest not in (argparse.SUPPRESS, "help")
+        }
+
     def _add_arguments(self):
         self._parser.add_argument('--credential-dir',
                                   required=False,
-                                  type=self.is_valid_credential_dir,
+                                  type=self._is_valid_credential_dir,
                                   help="Google API credential directory.")
         self._parser.add_argument('--bank-id',
                                   required=False,
-                                  type=self.is_valid_bank_id,
+                                  type=self._is_valid_bank_id,
                                   help="The bank routing number. Used to validate the OFX file.")
         self._parser.add_argument('--document-id',
                                   required=False,
@@ -122,18 +129,18 @@ class CCConsoleArgs:
                                   help="The Google document ID to write transactions. A new spreadsheet is created if this is omitted.")
         self._parser.add_argument('--alloc-columns',
                                   required=False,
-                                  type=self.set_alloc_columns,
+                                  type=self._set_alloc_columns,
                                   help="Colon delimited list of categories to allocate transactions.")
         self._parser.add_argument('--ofx-file',
-                                  required=True,
-                                  type=self.is_valid_ofx_file,
+                                  required=False,
+                                  type=self._is_valid_ofx_file,
                                   help="The OFX file to parse for transactions.")
         self._parser.add_argument('--statement-date',
-                                  required=True,
-                                  type=self.is_valid_statement_date,
+                                  required=False,
+                                  type=self._is_valid_statement_date,
                                   help="This is the worksheet that accumulates transactions.")
         self._parser.add_argument('--config-file',
                                   required=False,
                                   default=DEFAULT_CONFIG_FILE,
-                                  type=self.is_valid_config_file,
+                                  type=self._is_valid_config_file,
                                   help="JSON formatted config file. See docs for details.")

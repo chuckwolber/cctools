@@ -7,8 +7,9 @@ import ofxtools
 import os.path
 
 from ccct.allocation import Allocation
-from ccct.args import CCConsoleArgs
-from ccct.args import DEFAULT_CONFIG_FILE
+from ccct.config.args import CCConsoleArgs
+from ccct.config.args import DEFAULT_CONFIG_FILE
+from ccct.config.config import CCConfig
 from ccct.transaction import Transaction
 
 from google.auth.transport.requests import Request
@@ -23,66 +24,15 @@ SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 TITLE = "CreditCardTransactions"
 
 
-def _parse_args(exit_on_error=True):
-    global _args
-
-    _args = CCConsoleArgs(exit_on_error=exit_on_error).parse()
-    return True
-
-def _load_from_config(default_config_file=DEFAULT_CONFIG_FILE):
-    """ Load Missing Configuration from a Configuration File
-    If a default configuration file is available, load it and run the correct
-    validation action on any missing arguments.
-
-    Command line arguments always take precedence over configuration file
-    provided values.
-    """
-    if '_args' not in globals():
-        raise argparse.ArgumentError("ERROR: Argument object not found!")
-
-    if not isinstance(_args.config_file, dict):
-        if default_config_file is not None and os.path.exists(default_config_file):
-            _args.config_file = CCConsoleArgs.is_valid_config_file(str(default_config_file))
-        else:
-            return False
-
-    if _args.credential_dir == None and "credential_dir" in _args.config_file:
-        _args.credential_dir = CCConsoleArgs.is_valid_credential_dir(_args.config_file['credential_dir'])
-
-    if _args.bank_id == None and "bank_id" in _args.config_file:
-        _args.bank_id = CCConsoleArgs.is_valid_bank_id(str(_args.config_file['bank_id']))
-
-    if _args.document_id == None and "document_id" in _args.config_file:
-        _args.document_id = _args.config_file['document_id']
-
-    if _args.alloc_columns == None and "alloc_columns" in _args.config_file:
-        _args.alloc_columns = []
-        _args.alloc_columns_map = {}
-        for c in _args.config_file['alloc_columns']:
-            _args.alloc_columns.append(c['short'])
-            _args.alloc_columns_map[c['short']] = c['long']
-
-    return True
-
 def _resolve_config(exit_on_error=True, default_config_file=DEFAULT_CONFIG_FILE):
-    _parse_args(exit_on_error=exit_on_error)
-    _load_from_config(default_config_file=default_config_file)
-
-    # Missing command line args are filled in from a config file if one is
-    # available. Ensure that all required values end up being populated.
-    if _args.ofx_file == None:
-        raise argparse.ArgumentTypeError("Error: OFX file unknown!")
-    if _args.statement_date == None:
-        raise argparse.ArgumentTypeError("Error: Statement date unknown!")
-    if _args.credential_dir == None:
-        raise argparse.ArgumentTypeError("Error: Credential directory unknown!")
-    if _args.bank_id == None:
-        raise argparse.ArgumentTypeError("Error: Bank ID unknown!")
-    if _args.alloc_columns == None:
-        raise argparse.ArgumentTypeError("Error: Allocation columns unknown!")
+    global _args
+    _args = CCConfig.from_console(
+        exit_on_error=exit_on_error,
+        default_config_file=default_config_file,
+    ).resolve()
 
     Allocation.init_cols(_args.alloc_columns)
-    if hasattr(_args, 'alloc_columns_map'):
+    if _args.alloc_columns_map is not None:
         Allocation.init_cols_map(_args.alloc_columns_map)
 
     return True

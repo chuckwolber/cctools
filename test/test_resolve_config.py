@@ -19,7 +19,7 @@ class TestResolveConfig(unittest.TestCase):
         sys.argv = self.argv
 
     def test__resolve_config_all_missing(self):
-        self.assertRaises(argparse.ArgumentError, ccct._resolve_config, False)
+        self.assertRaises(argparse.ArgumentTypeError, ccct._resolve_config, False, None)
 
     def test__resolve_config_only_required(self):
         args.set_all_required()
