@@ -1,32 +1,52 @@
 # SPDX-License-Identifier: MIT
 
 import argparse
-import json
 import os.path
 import re
 
 from datetime import datetime
-from importlib.resources import files
 from pathlib import Path
+from typing import Any
 
-from jsonschema import validate
-from jsonschema.exceptions import ValidationError
-
-DEFAULT_CONFIG_FILE = Path("~/.config/cctools/ccct.config.json").expanduser()
-SCHEMA_FILE = files("ccct.config").joinpath("ccct.config.schema.json")
+from ccct.config.types import CCConfigType
 
 
-class CCConsoleArgs:
-    """Parse and validate command line arguments for the ccct console."""
+class CCConsoleArgs(CCConfigType):
+    """Parse and validate command line arguments."""
 
     def __init__(self, exit_on_error=True):
         self._parser = argparse.ArgumentParser(
             description="Categorize Credit Card Transactions",
             exit_on_error=exit_on_error)
+        self._alloc_columns = None
         self._add_arguments()
 
+    def to_dict(self) -> dict[str, Any | None]:
+        return {
+            action.dest: getattr(self, action.dest, None)
+            for action in self._parser._actions
+            if action.dest not in (argparse.SUPPRESS, "help")
+        }
+
+    @property
+    def alloc_columns(self) -> list | None:
+        return self._alloc_columns
+
+    @property
+    def alloc_columns_map(self) -> dict | None:
+        return None
+
+    def parse(self, args=None):
+        namespace = self._parser.parse_args(args=args)
+        for key, value in vars(namespace).items():
+            if key == "alloc_columns":
+                self._alloc_columns = value
+            else:
+                setattr(self, key, value)
+        return self
+
     @staticmethod
-    def _is_valid_credential_dir(credential_dir):
+    def _is_valid_credential_dir(credential_dir) -> Path:
         try:
             credential_dir = Path(credential_dir).expanduser()
         except TypeError:
@@ -36,7 +56,7 @@ class CCConsoleArgs:
         return credential_dir
 
     @staticmethod
-    def _is_valid_bank_id(bank_id):
+    def _is_valid_bank_id(bank_id) -> Any:
         error_msg = "ERROR: Invalid bank ID {}".format(bank_id)
         try:
             if not re.match('^[0-9]{9}$', bank_id):
@@ -48,7 +68,7 @@ class CCConsoleArgs:
         return bank_id
 
     @staticmethod
-    def _set_alloc_columns(alloc_columns):
+    def _set_alloc_columns(alloc_columns) -> Any:
         try:
             cols = alloc_columns.split(":")
         except AttributeError:
@@ -58,7 +78,7 @@ class CCConsoleArgs:
         return cols
 
     @staticmethod
-    def _is_valid_ofx_file(ofx_file):
+    def _is_valid_ofx_file(ofx_file) -> Path:
         try:
             ofx_file = Path(ofx_file).expanduser()
         except TypeError:
@@ -68,7 +88,7 @@ class CCConsoleArgs:
         return ofx_file
 
     @staticmethod
-    def _is_valid_statement_date(statement_date):
+    def _is_valid_statement_date(statement_date) -> Any:
         error_msg = "ERROR: Invalid statement date {}".format(statement_date)
         try:
             if not re.match('^[0-9]{8}$', statement_date):
@@ -80,41 +100,13 @@ class CCConsoleArgs:
         return statement_date
 
     @staticmethod
-    def _is_valid_config_file(config_file, schema_file=SCHEMA_FILE):
-        error_msg = "ERROR: Invalid config file {}".format(config_file)
+    def _is_valid_config_file(config_file) -> Path:
         try:
-            config_file = Path(config_file).expanduser()
-            with open(schema_file, "r") as json_schema:
-                schema = json.load(json_schema)
-            with open(config_file, "r") as json_config:
-                config = json.load(json_config)
-        except json.decoder.JSONDecodeError as e:
-            raise argparse.ArgumentTypeError(str(e))
-        except FileNotFoundError as e:
-            raise argparse.ArgumentTypeError(str(e))
+            return Path(config_file).expanduser()
         except TypeError:
             raise argparse.ArgumentTypeError("ERROR: Invalid config file!")
 
-        try:
-            validate(instance=config, schema=schema)
-        except ValidationError as e:
-            raise argparse.ArgumentTypeError(error_msg + "\n" + str(e))
-        return config
-
-    def parse(self, args=None):
-        namespace = self._parser.parse_args(args=args)
-        for key, value in vars(namespace).items():
-            setattr(self, key, value)
-        return self
-
-    def to_dict(self):
-        return {
-            action.dest: getattr(self, action.dest, None)
-            for action in self._parser._actions
-            if action.dest not in (argparse.SUPPRESS, "help")
-        }
-
-    def _add_arguments(self):
+    def _add_arguments(self) -> None:
         self._parser.add_argument('--credential-dir',
                                   required=False,
                                   type=self._is_valid_credential_dir,
@@ -141,6 +133,6 @@ class CCConsoleArgs:
                                   help="This is the worksheet that accumulates transactions.")
         self._parser.add_argument('--config-file',
                                   required=False,
-                                  default=DEFAULT_CONFIG_FILE,
+                                  default=None,
                                   type=self._is_valid_config_file,
                                   help="JSON formatted config file. See docs for details.")

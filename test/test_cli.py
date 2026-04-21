@@ -89,10 +89,20 @@ class TestCommandLineInterface(unittest.TestCase):
 
     def test_cli_config_file(self):
         args.set_all_required()
-        for i in const.INVALID_CONFIGS:
+        with self.subTest(i=None):
+            args.set_config_file(None)
+            self.assertRaises(argparse.ArgumentError, self.parse, False)
+            self.setUp()
+
+        for i in const.MISSING_CONFIG_FILES[1:] + const.INVALID_CONFIG_FILES:
             with self.subTest(i=i):
                 args.set_config_file(i)
-                self.assertRaises(argparse.ArgumentError, self.parse, False)
+                console_args = self.parse()
+                self.assertIsInstance(console_args.config_file, Path)
+                self.setUp()
+
         with self.subTest():
+            args.set_all_required()
             args.set_config_file(const.VALID_CONFIG)
-            self.assertTrue(self.parse())
+            console_args = self.parse()
+            self.assertIsInstance(console_args.config_file, Path)

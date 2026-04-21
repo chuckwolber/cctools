@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 from pathlib import Path
-from ccct.config.args import SCHEMA_FILE
+from ccct.config.constants import SCHEMA_FILE
 
 SCRIPT_DIR = str(Path(__file__).resolve().parent)
 ASSETS_DIR = SCRIPT_DIR + "/assets"

@@ -6,6 +6,7 @@ import unittest
 
 from . import const
 from ccct.config.args import CCConsoleArgs
+from ccct.config.file import CCConfigFile
 
 class TestValidationAction(unittest.TestCase):
     def test__is_valid_credential_dir(self):
@@ -55,23 +56,31 @@ class TestValidationAction(unittest.TestCase):
                 self.assertTrue(CCConsoleArgs._is_valid_statement_date(i))
 
     def test__is_valid_config_file(self):
-        for i in const.MISSING_CONFIG_FILES:
+        with self.subTest(i=None):
+            self.assertRaises(argparse.ArgumentTypeError, CCConsoleArgs._is_valid_config_file, None)
+        for i in const.MISSING_CONFIG_FILES[1:] + const.INVALID_CONFIG_FILES + [const.VALID_CONFIG]:
             with self.subTest(i=i):
-                self.assertRaises(argparse.ArgumentTypeError, CCConsoleArgs._is_valid_config_file, i)
+                self.assertTrue(CCConsoleArgs._is_valid_config_file(i))
+
+    def test_config_file_load(self):
+        with self.subTest(i=None):
+            self.assertRaises(TypeError, CCConfigFile, None)
+        for i in const.MISSING_CONFIG_FILES[1:]:
+            with self.subTest(i=i):
+                self.assertRaises(argparse.ArgumentTypeError, CCConfigFile, i)
         for i in const.INVALID_CONFIG_FILES:
             with self.subTest(i=i):
-                self.assertRaises(argparse.ArgumentTypeError, CCConsoleArgs._is_valid_config_file, i)
+                self.assertRaises(argparse.ArgumentTypeError, CCConfigFile, i)
         with self.subTest():
-            self.assertIsInstance(CCConsoleArgs._is_valid_config_file(const.VALID_CONFIG), dict)
+            self.assertIsInstance(CCConfigFile(const.VALID_CONFIG).to_dict(), dict)
         for i in const.VALID_SCHEMA_FILES:
             with self.subTest(i=i):
-                config = CCConsoleArgs._is_valid_config_file(const.VALID_CONFIG, i)
-                self.assertTrue(config["credential_dir"] == "~/.google")
-                self.assertTrue(config["bank_id"] == 314074269)
-                self.assertTrue(config["document_id"] == "2CZrPH3M-Lg-TmD5luXu7loG3svABgfGP23txXbar7dg")
-                self.assertTrue(config["alloc_columns"][0]["short"] == "ap")
-                self.assertTrue(config["alloc_columns"][0]["long"] == "Amazon Purchases")
-                self.assertTrue(config["alloc_columns"][1]["short"] == "pc")
-                self.assertTrue(config["alloc_columns"][1]["long"] == "Petcare")
-                self.assertTrue(config["alloc_columns"][2]["short"] == "af")
-                self.assertTrue(config["alloc_columns"][2]["long"] == "Auto Fuel")
+                config = CCConfigFile(const.VALID_CONFIG, schema_file=i)
+                config_dict = config.to_dict()
+                self.assertTrue(config_dict["credential_dir"] == "~/.google")
+                self.assertTrue(config_dict["bank_id"] == 314074269)
+                self.assertTrue(config_dict["document_id"] == "2CZrPH3M-Lg-TmD5luXu7loG3svABgfGP23txXbar7dg")
+                self.assertTrue(config.alloc_columns == ["ap", "pc", "af"])
+                self.assertTrue(config.alloc_columns_map["ap"] == "Amazon Purchases")
+                self.assertTrue(config.alloc_columns_map["pc"] == "Petcare")
+                self.assertTrue(config.alloc_columns_map["af"] == "Auto Fuel")

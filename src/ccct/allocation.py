@@ -24,17 +24,15 @@ class Allocation():
     ALLOC_COLUMNS_MAP = None
 
     @classmethod
-    def init_cols(cls, alloc_columns: list):
-        """Initialize shared data."""
+    def init_cols(cls, alloc_columns: list) -> None:
         cls.ALLOC_COLUMNS = alloc_columns
 
     @classmethod
-    def init_cols_map(cls, alloc_columns_map: list):
-        """Initialize shared data."""
+    def init_cols_map(cls, alloc_columns_map: list) -> None:
         cls.ALLOC_COLUMNS_MAP = alloc_columns_map
 
     @classmethod
-    def __print_cols_map_for_key(cls, key: str):
+    def __print_cols_map_for_key(cls, key: str) -> None:
         print("\t" + key + ":\t" + cls.ALLOC_COLUMNS_MAP[key])
 
     @classmethod

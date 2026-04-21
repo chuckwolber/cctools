@@ -8,6 +8,9 @@ from . import args
 from . import const
 from ccct import ccct
 from ccct.allocation import Allocation
+from ccct.config.args import CCConsoleArgs
+from ccct.config.config import CCConfig
+from ccct.config.file import CCConfigFile
 
 
 class TestTransaction(unittest.TestCase):
@@ -24,22 +27,28 @@ class TestTransaction(unittest.TestCase):
 
     def setUp(self):
         sys.argv = sys.argv[0:1]
-        ccct._args = None
-        ccct._ofx = None
 
     def tearDown(self):
         sys.argv = self.argv
+
+    def _categorizer(self):
+        console_args = CCConsoleArgs().parse()
+        config_file = None
+        if console_args.config_file is not None:
+            config_file = CCConfigFile(console_args.config_file)
+        config = CCConfig(args=console_args, file=config_file)
+        return ccct.CCTransactionCategorizer(config)
 
     def test__get_ofx_transactions(self):
         args.set_all_required()
         args.set_ofx_file(const.ASSETS_DIR + "/export.valid.qfx")
         args.set_config_file(const.VALID_CONFIG)
-        self.assertTrue(ccct._resolve_config(None))
-        self.assertTrue(ccct._parse_ofx_file())
-        self.assertTrue(ccct._get_ofx_transactions())
-        self.assertTrue(len(ccct._transactions) == 26)
+        categorizer = self._categorizer()
+        self.assertTrue(categorizer._parse_ofx_file())
+        self.assertTrue(categorizer._get_ofx_transactions())
+        self.assertTrue(len(categorizer._transactions) == 26)
 
-        for t in ccct._transactions:
+        for t in categorizer._transactions:
             self.assertIsNotNone(t.fitid)
             self.assertIsNotNone(t.dtposted)
             self.assertIsNotNone(t.trntype)
@@ -58,14 +67,14 @@ class TestTransaction(unittest.TestCase):
                 self.assertIsInstance(t.memo, str)
 
         tref = (2024, 11, 1, 12, 0, 0, 4, 306, 0)
-        for t in ccct._transactions[0:4]:
+        for t in categorizer._transactions[0:4]:
             tt = t.dtposted.timetuple()
             self.assertTrue(tt == tref)
             self.assertTrue(t.trntype == "CREDIT")
             self.assertTrue(t.name == "PAYMENT - THANK YOU")
 
         i = 0
-        for t in ccct._transactions[4:]:
+        for t in categorizer._transactions[4:]:
             i += 1
             tt = t.dtposted.timetuple()
             self.assertTrue(t.trntype == "DEBIT")
@@ -100,13 +109,13 @@ class TestTransaction(unittest.TestCase):
                 ['Redacted20', '2024-11-22 12:00:00+00:00', 'DEBIT', -964.47, 'Transaction 20', 'Memo for Transaction 20']
         ]
         for i in range(0,26):
-            self.assertEqual(ccct._transactions[i].to_list(), tl[i])
+            self.assertEqual(categorizer._transactions[i].to_list(), tl[i])
 
     def test_transaction_invalid_trnamt(self):
         args.set_all_required()
         args.set_ofx_file(const.ASSETS_DIR + "/export.valid.qfx")
         args.set_config_file(const.VALID_CONFIG)
-        self.assertTrue(ccct._resolve_config(None))
+        self._categorizer()
         t = self.T(fitid=None, dtposted=None, trntype=None, trnamt="INVALIDAMOUNT", name=None, memo=None)
         self.assertRaises(ValueError, ccct.Transaction, t)
 
@@ -114,7 +123,7 @@ class TestTransaction(unittest.TestCase):
         args.set_all_required()
         args.set_ofx_file(const.ASSETS_DIR + "/export.valid.qfx")
         args.set_config_file(const.VALID_CONFIG)
-        self.assertTrue(ccct._resolve_config(None))
+        self._categorizer()
         t = self.T(fitid=None, dtposted=None, trntype=None, trnamt=1.11, name=None, memo=None)
         self.assertRaises(ValueError, ccct.Transaction, t)
 
@@ -122,7 +131,7 @@ class TestTransaction(unittest.TestCase):
         args.set_all_required()
         args.set_ofx_file(const.ASSETS_DIR + "/export.valid.qfx")
         args.set_config_file(const.VALID_CONFIG)
-        self.assertTrue(ccct._resolve_config(None))
+        self._categorizer()
         t = self.T(fitid="8423858PG12AM3XZE", dtposted=None, trntype="CREDIT", trnamt=1.11, name=None, memo=None)
         self.assertRaises(ValueError, ccct.Transaction, t)
 
@@ -130,7 +139,7 @@ class TestTransaction(unittest.TestCase):
         args.set_all_required()
         args.set_ofx_file(const.ASSETS_DIR + "/export.valid.qfx")
         args.set_config_file(const.VALID_CONFIG)
-        self.assertTrue(ccct._resolve_config(None))
+        self._categorizer()
         t = self.T(fitid="8423858PG12AM3XZE", dtposted=datetime.datetime(2024, 11, 5, 12, 0, tzinfo=datetime.timezone.utc),
                    trntype="UNKNOWN", trnamt=1.11, name=None, memo=None)
         self.assertRaises(ValueError, ccct.Transaction, t)
@@ -139,7 +148,7 @@ class TestTransaction(unittest.TestCase):
         args.set_all_required()
         args.set_ofx_file(const.ASSETS_DIR + "/export.valid.qfx")
         args.set_config_file(const.VALID_CONFIG)
-        self.assertTrue(ccct._resolve_config(None))
+        self._categorizer()
         t = self.T(fitid="8423858PG12AM3XZE", dtposted=datetime.datetime(2024, 11, 5, 12, 0, tzinfo=datetime.timezone.utc),
                    trntype="CREDIT", trnamt=-1.11, name=None, memo=None)
         self.assertRaises(ValueError, ccct.Transaction, t)
@@ -148,7 +157,7 @@ class TestTransaction(unittest.TestCase):
         args.set_all_required()
         args.set_ofx_file(const.ASSETS_DIR + "/export.valid.qfx")
         args.set_config_file(const.VALID_CONFIG)
-        self.assertTrue(ccct._resolve_config(None))
+        self._categorizer()
         t = self.T(fitid="8423858PG12AM3XZE", dtposted=datetime.datetime(2024, 11, 5, 12, 0, tzinfo=datetime.timezone.utc),
                    trntype="DEBIT", trnamt=1.11, name=None, memo=None)
         self.assertRaises(ValueError, ccct.Transaction, t)
@@ -157,7 +166,7 @@ class TestTransaction(unittest.TestCase):
         args.set_all_required()
         args.set_ofx_file(const.ASSETS_DIR + "/export.valid.qfx")
         args.set_config_file(const.VALID_CONFIG)
-        self.assertTrue(ccct._resolve_config(None))
+        self._categorizer()
         t = self.T(fitid="8423858PG12AM3XZE", dtposted=datetime.datetime(2024, 11, 5, 12, 0, tzinfo=datetime.timezone.utc),
                    trntype="DEBIT", trnamt=-1.11, name=None, memo=None)
         self.assertRaises(ValueError, ccct.Transaction, t)
@@ -166,7 +175,7 @@ class TestTransaction(unittest.TestCase):
         args.set_all_required()
         args.set_ofx_file(const.ASSETS_DIR + "/export.valid.qfx")
         args.set_config_file(const.VALID_CONFIG)
-        self.assertTrue(ccct._resolve_config(None))
+        self._categorizer()
         t = self.T(fitid="8423858PG12AM3XZE", dtposted=datetime.datetime(2024, 11, 5, 12, 0, tzinfo=datetime.timezone.utc),
                    trntype="DEBIT", trnamt=-1.11, name="NAME", memo=None)
         tr = ccct.Transaction(t)
